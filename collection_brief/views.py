@@ -28,9 +28,7 @@ async def start_collection_brief(
             'title': 'Collection Brief Questionnaire',
             'meta': {
                 'type': 'collection_brief',
-                'current_question': 1,
-                'answers': {},
-                'completed': False
+                'answers': {}
             },
         })(),
         user_id="anonymous",
@@ -43,7 +41,7 @@ async def start_collection_brief(
         data={
             "thread_id": str(thread.id),
             "message": "Collection brief questionnaire started. Use the streaming chat API with this thread_id to begin.",
-            "instructions": "Send your first message to start the interview. The agent will guide you through 10 questions."
+            "instructions": "Send your first message to start the interview. The agent will guide you through the questionnaire."
         }
     )
 
@@ -60,14 +58,19 @@ async def get_questionnaire_status(
     if not thread or not thread.meta or thread.meta.get('type') != 'collection_brief':
         raise ValueError("Invalid collection brief thread")
 
+    answers = thread.meta.get('answers', {})
+    answers_count = len(answers)
+
+    # Get total questions from thread meta (set by agent) or default to answers count
+    total_questions = thread.meta.get('total_questions', answers_count)
+
     return ResponseData.model_construct(
         success=True,
         data={
             "thread_id": str(thread_id),
-            "current_question": thread.meta.get('current_question', 1),
-            "total_questions": 10,
-            "completed": thread.meta.get('completed', False),
-            "answers_count": len(thread.meta.get('answers', {})),
-            "answers": thread.meta.get('answers', {})
+            "total_questions": total_questions,
+            "answers_count": answers_count,
+            "completed": answers_count >= total_questions if total_questions > 0 else False,
+            "answers": answers
         }
     )

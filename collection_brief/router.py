@@ -3,7 +3,7 @@ Collection Brief Router
 """
 
 from fastapi import APIRouter
-from agents import views
+from . import views
 
 router = APIRouter(prefix="/collection-brief", tags=["Collection Brief"])
 

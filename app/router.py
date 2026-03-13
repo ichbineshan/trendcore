@@ -2,7 +2,7 @@ from fastapi.routing import APIRouter
 from fastapi.responses import JSONResponse
 
 from streaming.routes import streaming_router
-from agents.router import router as collection_brief_router
+from collection_brief.router import router as collection_brief_router
 
 
 async def healthz():

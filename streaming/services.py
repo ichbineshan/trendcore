@@ -108,7 +108,7 @@ class StreamingService:
 
             # Select appropriate agent
             if is_questionnaire:
-                from agents.collection_brief_agent import create_collection_brief_agent
+                from collection_brief import create_collection_brief_agent
                 agent_executor = create_collection_brief_agent(thread.meta)
 
                 # Stream agent execution with tool calls
@@ -153,7 +153,7 @@ class StreamingService:
                             answer_text = tool_output.get('answer_text')
 
                             if question_id:
-                                from agents.questionnaire import get_question_by_id
+                                from collection_brief import get_question_by_id
                                 question = get_question_by_id(question_id)
 
                                 answers[question_id] = {
@@ -206,41 +206,8 @@ class StreamingService:
                 )
 
             else:
-                # Regular agent (non-questionnaire)
-                from agents.registry import get_agent
-                agent = get_agent("trend_analysis")
-
-                accumulated_content = ""
-                async for chunk in agent.astream({"input": question_schema.message}):
-                    if isinstance(chunk, str):
-                        accumulated_content += chunk
-                        yield format_stream_event(
-                            StreamEventType.CONTENT_CHUNK,
-                            chunk,
-                            thread_id=str(thread_id),
-                        )
-                    elif isinstance(chunk, dict) and "content" in chunk:
-                        content_chunk = chunk["content"]
-                        accumulated_content += content_chunk
-                        yield format_stream_event(
-                            StreamEventType.CONTENT_CHUNK,
-                            content_chunk,
-                            thread_id=str(thread_id),
-                        )
-
-                # Create assistant message
-                assistant_message = await self.thread_service.create_message(
-                    request=type('CreateMessageRequest', (), {
-                        'role': 'assistant',
-                        'content': {'text': accumulated_content},
-                        'parent_message_id': user_message_id,
-                        'prompt_details': {},
-                        'images': [],
-                        'user_query': None,
-                        'metadata': {},
-                    })(),
-                    thread_id=thread_id,
-                )
+                # For non-questionnaire threads, raise an error or handle differently
+                raise ValueError("Only collection_brief type threads are supported")
 
             # Update task status
             await self.task_dao.update_task_status(task_id, "completed")

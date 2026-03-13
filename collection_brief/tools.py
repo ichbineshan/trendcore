@@ -8,8 +8,8 @@ from typing import Dict, Any, Optional
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from agents.questionnaire import COLLECTION_BRIEF_QUESTIONS, get_question_by_number, get_total_questions
-from agents.questionnaire_forms import get_form_schema
+from .questionnaire import COLLECTION_BRIEF_QUESTIONS, get_question_by_number, get_total_questions
+from .forms import get_form_schema
 
 
 class AskQuestionInput(BaseModel):

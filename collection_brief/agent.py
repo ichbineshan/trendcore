@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from config.settings import loaded_config
-from agents.collection_brief_tools import create_collection_brief_tools
+from .tools import create_collection_brief_tools
 
 
 SYSTEM_PROMPT = """You are a helpful AI assistant conducting a collection brief questionnaire interview.

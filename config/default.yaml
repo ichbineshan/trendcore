@@ -1,0 +1,15 @@
+# Application
+env: local
+port: 8001
+host: 0.0.0.0
+mode: server
+debug: true
+
+# Database
+postgres_url: postgresql://agentix_user:password@localhost:5432/trend_analysis
+
+# Redis
+redis_url: redis://localhost:6379/0
+
+# AI Models
+openai_api_key: ""

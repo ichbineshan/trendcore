@@ -100,10 +100,8 @@ class StreamingService:
             is_questionnaire = thread.meta.get('type') == 'collection_brief'
 
             # Initialize collection brief metadata if this is a new questionnaire thread
-            if is_questionnaire and 'current_question' not in thread.meta:
-                thread.meta['current_question'] = 1
+            if is_questionnaire and 'answers' not in thread.meta:
                 thread.meta['answers'] = {}
-                thread.meta['completed'] = False
                 await self.thread_service.update_thread_meta(thread_id, thread.meta)
 
             # Select appropriate agent
@@ -144,7 +142,6 @@ class StreamingService:
                             # Ensure thread.meta is initialized
                             if thread.meta is None:
                                 thread.meta = {}
-                            current_num = thread.meta.get('current_question', 1)
                             answers = thread.meta.get('answers', {})
 
                             # Save the answer
@@ -162,12 +159,6 @@ class StreamingService:
                                     'answer_text': answer_text,
                                     'timestamp': str(user_message.created_at) if user_message.created_at else None
                                 }
-
-                                # Move to next question or mark complete
-                                if question_number >= 10:
-                                    thread.meta['completed'] = True
-                                else:
-                                    thread.meta['current_question'] = question_number + 1
 
                                 thread.meta['answers'] = answers
                                 await self.thread_service.update_thread_meta(thread_id, thread.meta)

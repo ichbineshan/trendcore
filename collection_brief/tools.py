@@ -8,13 +8,12 @@ from typing import Dict, Any, Optional
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from .questionnaire import COLLECTION_BRIEF_QUESTIONS, get_question_by_number, get_total_questions
-from .forms import get_form_schema
-
 
 class AskQuestionInput(BaseModel):
     """Input for asking a question."""
-    question_number: int = Field(description="The question number to ask (1-10)")
+    question_number: int = Field(description="The question number to ask")
+    question_id: str = Field(description="The question ID (e.g., 'collection_snapshot')")
+    question_data: Dict[str, Any] = Field(description="The complete question data as JSON including title, fields, etc.")
 
 
 class AskQuestionTool(BaseTool):
@@ -23,59 +22,53 @@ class AskQuestionTool(BaseTool):
     name: str = "ask_question"
     description: str = """
     Use this tool to ask the next question in the collection brief questionnaire.
-    The tool returns the complete question with all metadata including:
-    - Question number and title
-    - The prompt to ask
-    - What to include in the answer
-    - An example answer
 
-    This should be called when you need to ask the user a question.
+    You must provide:
+    - question_number: The question number (e.g., 1, 2, 3...)
+    - question_id: The question ID from the questionnaire (e.g., 'collection_snapshot', 'customer_persona')
+    - question_data: The complete question data as JSON with the structure:
+      {
+        "title": "Question title",
+        "description": "Question description",
+        "sections": [
+          {
+            "fields": [
+              {
+                "id": "field_id",
+                "type": "text|textarea|radio|checkbox",
+                "label": "Field label",
+                "placeholder": "Placeholder text",
+                "required": true|false,
+                "options": [...] (for radio/checkbox)
+              }
+            ]
+          }
+        ]
+      }
+
+    The tool will format and return the question for display.
     """
     args_schema: type[BaseModel] = AskQuestionInput
 
-    def _run(self, question_number: int) -> Dict[str, Any]:
-        """Ask a question by number."""
-        question = get_question_by_number(question_number)
-        if not question:
-            return {
-                "error": f"Question {question_number} not found",
-                "type": "error"
-            }
-
-        # Get the form schema for this question
-        form_schema = get_form_schema(question["id"])
-
-        if not form_schema:
-            # Fallback to simple question format if no form schema exists
-            return {
-                "type": "question",
-                "question_number": question["number"],
-                "question_id": question["id"],
-                "title": question["title"],
-                "prompt": question["prompt"],
-                "what_to_include": question["what_to_include"],
-                "example": question.get("example", ""),
-                "total_questions": get_total_questions()
-            }
-
-        # Return the form schema with additional metadata
+    def _run(self, question_number: int, question_id: str, question_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Ask a question by number, ID, and data."""
+        # Return the question data with metadata
         return {
             "type": "form",
-            "question_number": question["number"],
-            "question_id": question["id"],
-            "total_questions": get_total_questions(),
-            "form_schema": form_schema
+            "question_number": question_number,
+            "question_id": question_id,
+            "form_schema": question_data
         }
 
-    async def _arun(self, question_number: int) -> Dict[str, Any]:
+    async def _arun(self, question_number: int, question_id: str, question_data: Dict[str, Any]) -> Dict[str, Any]:
         """Async version."""
-        return self._run(question_number)
+        return self._run(question_number, question_id, question_data)
 
 
 class SaveAnswerInput(BaseModel):
     """Input for saving an answer."""
     question_id: str = Field(description="The ID of the question being answered")
-    question_number: int = Field(description="The question number (1-10)")
+    question_number: int = Field(description="The question number")
     answer_text: str = Field(description="The user's answer text")
 
 
@@ -89,7 +82,7 @@ class SaveAnswerTool(BaseTool):
 
     You must provide:
     - question_id: The ID of the question (e.g., 'collection_snapshot')
-    - question_number: The question number (1-10)
+    - question_number: The question number
     - answer_text: The exact text the user provided
     """
     args_schema: type[BaseModel] = SaveAnswerInput
@@ -123,7 +116,11 @@ class ReadAnswersTool(BaseTool):
     name: str = "read_answers"
     description: str = """
     Use this tool to retrieve all previously saved answers.
-    This is useful when the user asks to review their answers or wants to see what they've already provided.
+
+    Call this tool:
+    - When the user asks to review their answers
+    - **IMPORTANT: At the end of the questionnaire when all questions have been answered** to show a summary
+    - To check which questions have been completed
     """
     args_schema: type[BaseModel] = ReadAnswersInput
     thread_meta: Dict[str, Any] = Field(default_factory=dict)
@@ -131,12 +128,11 @@ class ReadAnswersTool(BaseTool):
     def _run(self) -> Dict[str, Any]:
         """Read all answers."""
         answers = self.thread_meta.get('answers', {})
-        current_question = self.thread_meta.get('current_question', 1)
+        total_questions = self.thread_meta.get('total_questions', len(answers))
 
         return {
             "type": "answers_list",
-            "current_question": current_question,
-            "total_questions": get_total_questions(),
+            "total_questions": total_questions,
             "answers_count": len(answers),
             "answers": answers,
             "message": f"Retrieved {len(answers)} answer(s)"

@@ -2,17 +2,21 @@
 Collection Brief Package
 
 This package contains all components for the collection brief questionnaire:
-- Agent: The main AI agent for conducting interviews
+- Agent: LangGraph-based agent (create_react_agent), aligned with ai-genetic pattern
 - Tools: LangChain tools for asking questions and saving answers
+- Registry: Tool metadata and response_format for streaming/handlers
 
 All questionnaire logic is handled through the streaming chat API.
-No API endpoints needed - uses standard streaming chat.
 """
 
 from .agent import create_collection_brief_agent
 from .tools import create_collection_brief_tools
+from .registry import tools_registry
+from .system_prompt import collection_brief_prompt
 
 __all__ = [
-    'create_collection_brief_agent',
-    'create_collection_brief_tools',
+    "create_collection_brief_agent",
+    "create_collection_brief_tools",
+    "tools_registry",
+    "collection_brief_prompt",
 ]

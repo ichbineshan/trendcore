@@ -2,6 +2,8 @@ import json
 import uuid
 from typing import AsyncGenerator
 
+from langchain_core.messages import HumanMessage
+
 from config.logging import logger
 from config.settings import loaded_config
 from streaming.serializers import QuestionSchema, StreamEventType
@@ -19,6 +21,39 @@ class StreamingService:
         self.connection_handler = connection_handler
         self.thread_service = ThreadService(connection_handler)
         self.task_dao = TaskDAO(connection_handler.session)
+
+    async def _apply_tool_meta(self, thread_id, tool_name: str, data: dict, user_message) -> None:
+        """Update thread meta from tool output (ask_question / save_answer)."""
+        if not isinstance(data, dict):
+            return
+        if tool_name == "ask_question":
+            thread = await self.thread_service.get_thread(thread_id)
+            if thread.meta is None:
+                thread.meta = {}
+            form_schema = data.get("form_schema", data) if isinstance(data.get("form_schema"), dict) else {}
+            thread.meta["current_question"] = {
+                "question_id": data.get("question_id"),
+                "question_number": data.get("question_number"),
+                "question_title": form_schema.get("title", data.get("question_id", "")),
+            }
+            await self.thread_service.update_thread_meta(thread_id, thread.meta)
+        elif tool_name == "save_answer":
+            thread = await self.thread_service.get_thread(thread_id)
+            if thread.meta is None:
+                thread.meta = {}
+            answers = thread.meta.get("answers", {})
+            question_id = data.get("question_id")
+            if question_id:
+                current_question = thread.meta.get("current_question", {})
+                question_title = current_question.get("question_title", question_id) if current_question.get("question_id") == question_id else question_id
+                answers[question_id] = {
+                    "question_number": data.get("question_number"),
+                    "question_title": question_title,
+                    "answer_text": data.get("answer_text", ""),
+                    "timestamp": str(user_message.created_at) if getattr(user_message, "created_at", None) else None,
+                }
+                thread.meta["answers"] = answers
+                await self.thread_service.update_thread_meta(thread_id, thread.meta)
 
     async def generate_streaming_response(
         self,
@@ -104,102 +139,62 @@ class StreamingService:
                 thread.meta['answers'] = {}
                 await self.thread_service.update_thread_meta(thread_id, thread.meta)
 
-            # Select appropriate agent
+            # Select appropriate agent; use ResponseHandler (same as cortex) for tool/stream normalization
             if is_questionnaire:
                 from collection_brief import create_collection_brief_agent
-                agent_executor = create_collection_brief_agent(thread.meta)
+                from collection_brief.registry import tools_registry
+                from agent_utils import ResponseHandler
 
-                # Stream agent execution with tool calls
+                agent = create_collection_brief_agent(thread.meta)
+                messages = [HumanMessage(content=question_schema.message)]
+                response_handler = ResponseHandler(
+                    tools=tools_registry,
+                    model_name="gpt-4o",
+                )
+
                 accumulated_content = ""
-                async for event in agent_executor.astream_events(
-                    {"input": question_schema.message},
+                last_tool = ""
+                async for event in agent.astream_events(
+                    {"messages": messages},
                     version="v1",
                 ):
-                    event_type = event.get("event")
+                    if event.get("event") == "on_tool_start":
+                        last_tool = event.get("name", "")
+                    response = await response_handler.handle_response(event, last_tool)
 
-                    # Tool start - emit tool call with arguments
-                    if event_type == "on_tool_start":
-                        tool_name = event.get("name")
-                        tool_input = event.get("data", {}).get("input", {})
+                    if response is None:
+                        continue
 
+                    try:
+                        parsed = json.loads(response)
+                    except json.JSONDecodeError:
+                        accumulated_content += response
+                        yield format_stream_event(StreamEventType.CONTENT_CHUNK, response, thread_id=str(thread_id))
+                        continue
+
+                    event_type = parsed.get("type")
+                    if event_type == "toolStart":
                         yield format_stream_event(
                             StreamEventType.TOOL_CALL,
                             json.dumps({
-                                "tool": tool_name,
-                                "arguments": tool_input
+                                "tool": event.get("name"),
+                                "arguments": event.get("data", {}).get("input", {}),
                             }),
                             thread_id=str(thread_id),
                         )
-
-                    # Tool end - handle ask_question and save_answer
-                    elif event_type == "on_tool_end":
-                        tool_name = event.get("name")
-                        tool_output = event.get("data", {}).get("output", {})
-
-                        # If ask_question was called, store question details for later
-                        if tool_name == "ask_question" and isinstance(tool_output, dict):
-                            thread = await self.thread_service.get_thread(thread_id)
-                            if thread.meta is None:
-                                thread.meta = {}
-
-                            # Store current question details
-                            question_id = tool_output.get('question_id')
-                            form_schema = tool_output.get('form_schema', {})
-                            question_title = form_schema.get('title', question_id)
-
-                            thread.meta['current_question'] = {
-                                'question_id': question_id,
-                                'question_number': tool_output.get('question_number'),
-                                'question_title': question_title
-                            }
-                            await self.thread_service.update_thread_meta(thread_id, thread.meta)
-
-                        # If save_answer was called, update thread metadata
-                        if tool_name == "save_answer" and isinstance(tool_output, dict):
-                            thread = await self.thread_service.get_thread(thread_id)
-                            # Ensure thread.meta is initialized
-                            if thread.meta is None:
-                                thread.meta = {}
-                            answers = thread.meta.get('answers', {})
-
-                            # Save the answer
-                            question_id = tool_output.get('question_id')
-                            question_number = tool_output.get('question_number')
-                            answer_text = tool_output.get('answer_text')
-
-                            if question_id:
-                                # Get question title from the last asked question
-                                current_question = thread.meta.get('current_question', {})
-                                question_title = current_question.get('question_title', question_id) if current_question.get('question_id') == question_id else question_id
-
-                                answers[question_id] = {
-                                    'question_number': question_number,
-                                    'question_title': question_title,
-                                    'answer_text': answer_text,
-                                    'timestamp': str(user_message.created_at) if user_message.created_at else None
-                                }
-
-                                thread.meta['answers'] = answers
-                                await self.thread_service.update_thread_meta(thread_id, thread.meta)
-
+                    elif event_type == "toolUsed":
+                        detail = parsed.get("detail", {})
+                        await self._apply_tool_meta(thread_id, last_tool, detail, user_message)
                         yield format_stream_event(
                             StreamEventType.TOOL_RESULT,
-                            json.dumps(tool_output),
+                            response,
                             thread_id=str(thread_id),
                         )
-
-                    # Chat model stream - text chunks
-                    elif event_type == "on_chat_model_stream":
-                        chunk_data = event.get("data", {}).get("chunk")
-                        if chunk_data:
-                            content = getattr(chunk_data, 'content', '')
-                            if content:
-                                accumulated_content += content
-                                yield format_stream_event(
-                                    StreamEventType.CONTENT_CHUNK,
-                                    content,
-                                    thread_id=str(thread_id),
-                                )
+                    elif event_type in ("supervisor_streaming", "streaming"):
+                        content = parsed.get("content", "")
+                        if content:
+                            accumulated_content += content
+                            yield format_stream_event(StreamEventType.CONTENT_CHUNK, content, thread_id=str(thread_id))
 
                 # Create assistant message
                 assistant_message = await self.thread_service.create_message(

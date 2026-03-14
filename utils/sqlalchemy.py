@@ -1,12 +1,11 @@
 from datetime import datetime
 from pytz import timezone
-from sqlalchemy import Column, BigInteger
+from sqlalchemy import Column, BigInteger, DateTime
 from sqlalchemy.orm import declarative_mixin, Mapped, declarative_base
 from urllib.parse import urlparse, urlunparse
+
+from utils.constants import UTC_TIME_ZONE
 import time
-
-
-UTC_TIME_ZONE = "UTC"
 
 
 def get_current_time(time_zone: str = UTC_TIME_ZONE):
@@ -14,7 +13,6 @@ def get_current_time(time_zone: str = UTC_TIME_ZONE):
 
 
 def async_db_url(db_url: str):
-    """Convert postgres:// URL to postgresql+asyncpg://"""
     parsed_url = urlparse(db_url)
     new_scheme = "postgresql+asyncpg"
     netloc = f"{parsed_url.username}:{parsed_url.password}@{parsed_url.hostname}:{parsed_url.port}"
@@ -29,15 +27,19 @@ class EpochTimestampMixin:
     """
 
     created_at: Mapped[int] = Column(
-        BigInteger, default=lambda: int(time.time()), nullable=False, index=True
+        BigInteger, default=lambda: int(time.time()), nullable=False
     )
     updated_at: Mapped[int] = Column(
         BigInteger,
         default=lambda: int(time.time()),
         onupdate=lambda: int(time.time()),
-        nullable=False,
-        index=True,
+        nullable=False
     )
 
+@declarative_mixin
+class TimestampMixin:
+    created_at: Mapped[datetime] = Column(DateTime(timezone=True), default=get_current_time)
+    updated_at: Mapped[datetime] = Column(DateTime(timezone=True), default=get_current_time,
+                                          onupdate=get_current_time)
 
 Base = declarative_base()

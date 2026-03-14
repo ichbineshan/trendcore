@@ -131,10 +131,28 @@ class StreamingService:
                             thread_id=str(thread_id),
                         )
 
-                    # Tool end - handle save_answer to update thread
+                    # Tool end - handle ask_question and save_answer
                     elif event_type == "on_tool_end":
                         tool_name = event.get("name")
                         tool_output = event.get("data", {}).get("output", {})
+
+                        # If ask_question was called, store question details for later
+                        if tool_name == "ask_question" and isinstance(tool_output, dict):
+                            thread = await self.thread_service.get_thread(thread_id)
+                            if thread.meta is None:
+                                thread.meta = {}
+
+                            # Store current question details
+                            question_id = tool_output.get('question_id')
+                            form_schema = tool_output.get('form_schema', {})
+                            question_title = form_schema.get('title', question_id)
+
+                            thread.meta['current_question'] = {
+                                'question_id': question_id,
+                                'question_number': tool_output.get('question_number'),
+                                'question_title': question_title
+                            }
+                            await self.thread_service.update_thread_meta(thread_id, thread.meta)
 
                         # If save_answer was called, update thread metadata
                         if tool_name == "save_answer" and isinstance(tool_output, dict):
@@ -150,12 +168,13 @@ class StreamingService:
                             answer_text = tool_output.get('answer_text')
 
                             if question_id:
-                                from collection_brief import get_question_by_id
-                                question = get_question_by_id(question_id)
+                                # Get question title from the last asked question
+                                current_question = thread.meta.get('current_question', {})
+                                question_title = current_question.get('question_title', question_id) if current_question.get('question_id') == question_id else question_id
 
                                 answers[question_id] = {
                                     'question_number': question_number,
-                                    'question_title': question.get('title', '') if question else '',
+                                    'question_title': question_title,
                                     'answer_text': answer_text,
                                     'timestamp': str(user_message.created_at) if user_message.created_at else None
                                 }

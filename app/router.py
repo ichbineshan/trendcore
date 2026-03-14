@@ -2,7 +2,6 @@ from fastapi.routing import APIRouter
 from fastapi.responses import JSONResponse
 
 from streaming.routes import streaming_router
-from collection_brief.router import router as collection_brief_router
 
 
 async def healthz():
@@ -15,7 +14,6 @@ api_router = APIRouter()
 # Version 1.0 routes
 api_router_v1 = APIRouter(prefix="/v1.0")
 api_router_v1.include_router(streaming_router)
-api_router_v1.include_router(collection_brief_router)
 
 # Health check
 api_router_healthz = APIRouter()

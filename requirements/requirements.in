@@ -9,6 +9,7 @@ langchain==0.3.25
 langchain-core==0.3.76
 langchain-anthropic==0.3.14
 langchain-openai==0.3.17
+langgraph==0.6.7
 
 # Database
 sqlalchemy==2.0.43

@@ -79,9 +79,13 @@ You have access to three tools:
 - Be brief and friendly in your responses between tool calls
 - Adapt the conversation naturally while ensuring all important information is collected
 - At the end when all questions are complete, call read_answers to display the final summary
+- DO NOT ask questions that have already been completed (check the completed answers below)
 
 Current state:
 - Questions completed: {answers_count}
+
+Completed answers (DO NOT re-ask these questions unless previous answer is vague and more clarification is required.):
+{completed_answers}
 """
 
 
@@ -99,6 +103,24 @@ def create_collection_brief_agent(thread_meta: dict = None):
         thread_meta = {}
 
     answers = thread_meta.get('answers', {})
+
+    # Format answers for agent context - show full answer data for context-aware questioning
+    if answers:
+        answers_summary = []
+        # Sort by question number for readability
+        sorted_answers = sorted(answers.items(), key=lambda x: x[1].get('question_number', 999))
+
+        for q_id, answer_data in sorted_answers:
+            q_num = answer_data.get('question_number', '?')
+            q_title = answer_data.get('question_title', q_id)
+            answer_text = answer_data.get('answer_text', '')
+            answers_summary.append(
+                f"{q_num}. {q_id} ({q_title}):\n   {answer_text}"
+            )
+
+        completed_answers_str = "\n\n".join(answers_summary)
+    else:
+        completed_answers_str = "none"
 
     # Create LLM
     llm = ChatOpenAI(
@@ -122,6 +144,7 @@ def create_collection_brief_agent(thread_meta: dict = None):
     # Partial with current state and questionnaire content
     prompt = prompt.partial(
         answers_count=len(answers),
+        completed_answers=completed_answers_str,
         questionnaire_content=QUESTIONNAIRE_CONTENT
     )
 

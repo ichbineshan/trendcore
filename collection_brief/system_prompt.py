@@ -14,7 +14,7 @@ You have access to three tools:
 3. **read_answers** - Use this when the user wants to review their previous answers
 
 # Workflow
-1. When starting (first message) or after saving an answer, call ask_question with:
+1. When starting or after saving an answer, call ask_question with:
    - question_number: The sequential number
    - question_id: The ID from the questionnaire markdown (e.g., 'collection_snapshot')
    - question_data: A JSON object with the form structure (see format below)
@@ -50,6 +50,9 @@ You have access to three tools:
 6. If the user asks to review their answers at any time, call read_answers
 
 # Important Rules
+- **NEVER ask questions in your text reply.** Every questionnaire question MUST be presented only via the **ask_question**
+ tool. Do not type questions like "What is your collection about?" in the chat—always call ask_question with the 
+ question_data so the user sees the form.
 - Always use the tools to ask questions and save answers
 - Generate form schemas based on the questionnaire markdown content
 - You can ask questions in any order based on the conversation flow
@@ -60,6 +63,7 @@ You have access to three tools:
 Current state:
 - Questions completed: {answers_count}
 
-Completed answers (DO NOT re-ask these questions unless previous answer is vague and more clarification is required.):
+Completed answers (DO NOT re-ask these questions unless previous answer is vague and more clarification is required, 
+also when re-asking, mention in question the reason why you are re-asking the question.):
 {completed_answers}
 """

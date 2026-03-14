@@ -2,94 +2,89 @@
 Collection Brief Agent
 
 AI agent for conducting the collection brief questionnaire interview using tools.
+Built on LangGraph (create_react_agent), aligned with ai-genetic file_generator_agent pattern.
+Use with {"messages": [...]} like cortex streaming (e.g. agent.astream_events({"messages": messages}, version="v1")).
 """
 
+from pathlib import Path
+
+from langchain_core.messages import SystemMessage
+from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.agents import create_tool_calling_agent, AgentExecutor
 
 from config.settings import loaded_config
+from .system_prompt import collection_brief_prompt
 from .tools import create_collection_brief_tools
 
 
-SYSTEM_PROMPT = """You are a helpful AI assistant conducting a collection brief questionnaire interview.
+def load_questionnaire_markdown() -> str:
+    """Load questionnaire.md content."""
+    md_path = Path(__file__).parent / "questionnaire.md"
+    with open(md_path, "r", encoding="utf-8") as f:
+        return f.read()
 
-You have access to three tools:
-1. **ask_question** - Use this to ask the next question in the questionnaire
-2. **save_answer** - Use this immediately after the user provides an answer
-3. **read_answers** - Use this when the user wants to review their previous answers
 
-Your workflow:
-1. When starting (first message) or after saving an answer, call ask_question with the current question number
-2. When the user provides an answer, call save_answer with the question_id, question_number, and their answer_text
-3. After saving, immediately call ask_question for the next question
-4. If the user asks to see their answers, call read_answers
+# Load questionnaire content once at module level
+QUESTIONNAIRE_CONTENT = load_questionnaire_markdown()
 
-Important rules:
-- Always use the tools to ask questions and save answers
-- Do NOT generate questions yourself - use the ask_question tool
-- Do NOT skip questions or change the order
-- Be brief and friendly in your responses between tool calls
-- After saving an answer, immediately ask the next question
 
-Current state:
-- Current question number: {current_question}
-- Questions completed: {answers_count}
-- Total questions: 10
-"""
+def _build_system_message(thread_meta: dict) -> SystemMessage:
+    """Build system message with questionnaire content and current answers state."""
+    answers = thread_meta.get("answers", {})
+
+    if answers:
+        answers_summary = []
+        sorted_answers = sorted(
+            answers.items(), key=lambda x: x[1].get("question_number", 999)
+        )
+        for q_id, answer_data in sorted_answers:
+            q_num = answer_data.get("question_number", "?")
+            q_title = answer_data.get("question_title", q_id)
+            answer_text = answer_data.get("answer_text", "")
+            answers_summary.append(
+                f"{q_num}. {q_id} ({q_title}):\n   {answer_text}"
+            )
+        completed_answers_str = "\n\n".join(answers_summary)
+    else:
+        completed_answers_str = "none"
+
+    return SystemMessage(
+        content=collection_brief_prompt.format(
+            questionnaire_content=QUESTIONNAIRE_CONTENT,
+            answers_count=len(answers),
+            completed_answers=completed_answers_str,
+        )
+    )
 
 
 def create_collection_brief_agent(thread_meta: dict = None):
     """
-    Create a collection brief agent that uses tools to conduct the questionnaire.
+    Create a collection brief agent (LangGraph create_react_agent) for the questionnaire.
+
+    Use like cortex: pass {"messages": [HumanMessage(content=...), ...]} and call
+    agent.astream_events({"messages": messages}, version="v1").
 
     Args:
         thread_meta: Thread metadata containing current_question and answers
 
     Returns:
-        AgentExecutor
+        Compiled graph with astream_events(input_dict, version="v1")
     """
     if thread_meta is None:
         thread_meta = {}
 
-    current_question = thread_meta.get('current_question', 1)
-    answers = thread_meta.get('answers', {})
-
-    # Create LLM
-    llm = ChatOpenAI(
+    model = ChatOpenAI(
         model="gpt-4o",
         api_key=loaded_config.openai_api_key,
         temperature=0.3,
         streaming=True,
     )
 
-    # Create tools with thread context
     tools = create_collection_brief_tools(thread_meta)
+    system_message = _build_system_message(thread_meta)
 
-    # Create prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT),
-        ("placeholder", "{chat_history}"),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}"),
-    ])
-
-    # Partial with current state
-    prompt = prompt.partial(
-        current_question=current_question,
-        answers_count=len(answers)
-    )
-
-    # Create agent
-    agent = create_tool_calling_agent(llm, tools, prompt)
-
-    # Create executor
-    agent_executor = AgentExecutor(
-        agent=agent,
+    return create_react_agent(
+        model=model,
+        prompt=system_message,
         tools=tools,
-        verbose=True,
-        handle_parsing_errors=True,
-        return_intermediate_steps=True,
     )
-
-    return agent_executor

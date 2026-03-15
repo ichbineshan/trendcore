@@ -40,17 +40,16 @@ Primary: 25–34
 
 4) Creative north star
 Prompt (what the user sees)
-Now define the "feel" and the non-negotiables. These are rules the AI will follow while generating themes, moodboards, designs, and artworks.
+Creative North Star
+Form fields (use for ask_question question_data; id: creative-north-star)
+- Emotion to feel: text, required, placeholder: e.g. Bold yet refined
+- Design rules: textarea, required, description: Things that must be true in every design, placeholder: e.g. Every design must feature a hero silhouette / e.g. Use only warm neutrals for base colors
 What to include in your answer
-Emotion to feel (2–4 words)
-Examples: fresh, confident, playful, calm, bold, elevated
-Absolutely true in every design (2–3 rules)
-Think: the collection DNA that should show up in every piece
+Emotion to feel (2–4 words). Design rules: 2–3 things that must be true in every design.
 Good answer guidance
 Make the rules actionable. Avoid generic lines like "good quality" or "stylish".
 Example
-Emotion: fresh, confident, effortless
-Always true: clean silhouette, comfort mobility, one subtle signature detail
+Emotion: fresh, confident, effortless. Design rules: clean silhouette, comfort mobility, one subtle signature detail
 
 5) Range architecture
 Prompt (what the user sees)

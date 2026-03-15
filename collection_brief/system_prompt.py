@@ -41,7 +41,7 @@ You have access to four tools:
 
 3. When the user provides an answer, call save_answer with the question_id, question_number, and their answer_text
 
-4. After saving, decide which question to ask next and call ask_question
+4. **If the user answers multiple (or all) questions in a single chat message**, call save_answer once for each question they answered. Detect the question_id, question_number, and the corresponding answer_text from their message, then call save_answer for each.
 
 5. **IMPORTANT: When all questions from the markdown have been answered**, call **review_and_finish_questionnaire** with question_data in the same form config structure as ask_question: id "review-and-finish", title "Review your answers", submitLabel "Create Design", and fields: one field per question with id (question_id), type "text", label (question name), defaultValue (the user's answer). The UI will show these as read-only with a Create Design button.
 
@@ -57,6 +57,7 @@ You have access to four tools:
 - Adapt the conversation naturally while ensuring all important information is collected
 - At the end when all questions are complete, call review_and_finish_questionnaire with question_data as a form config
 - DO NOT ask questions that have already been completed (check the completed answers below)
+- When the user types answers for several questions in one message, call save_answer for each such answer before asking the next question or showing the review
 
 Current state:
 - Questions completed: {answers_count}

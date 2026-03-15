@@ -98,31 +98,19 @@ Layers cropped or hip-length, light and structured
 
 8) Color, materials, and surface direction
 Prompt (what the user sees)
-Describe the look and tactile feel. This guides palette selection, fabric recommendations, and surface design like prints, embroidery, and embellishment.
+Describe the color palette, material direction, and role of prints.
+Form fields (use for ask_question question_data; id: color-materials)
+- Color & Materials section description: Describe the color palette, material direction, and role of prints.
+- Palette Intent: text, placeholder: e.g. sun-faded neutrals, jewel-toned, soft pastels
+- Material Handfeel: text, placeholder: e.g. crisp, airy, dry-touch, fluid, structured, textured
+- Role of Prints: chip-select, single, required, options: None, Minimal, Hero only, Throughout
 What to include in your answer
-Palette intent in plain words
-Describe mood: sun-faded, jewel-toned, stormy, soft pastels, monochrome
-Material handfeel direction
-Words like: crisp, airy, dry-touch, fluid, structured, textured
-Role of prints in the collection
-Choose one: none, minimal, hero-only, print-led
-If possible, add a rough % like 15–20%
+Palette intent (mood and colors). Material handfeel (crisp, airy, etc.). Role of prints: pick one.
 Good answer guidance
 Palette should communicate feeling and contrast strategy, not just color names.
 Example
-Palette: sun-faded neutrals with soft coastal blues and one citrus accent
-Handfeel: crisp, breathable, lightly textured, structured drape
-Print role: minimal, hero-only around 15–20%
-Only if prints are not "none", answer these
-Print families allowed (eg stripes, botanicals, geometrics, watercolor)
-Print scale preference (micro, medium, oversized, mixed)
-Techniques allowed (screen print, embroidery, applique, foil)
-Cultural/motif include or avoid (avoid religious motifs, avoid slogans, etc)
-Example
-Families: watercolor stripes, abstract botanical linework, minimal geometrics
-Scale: micro and medium, one oversized hero max
-Techniques: screen print yes, light embroidery yes, foil no, heavy beadwork no
-Motifs: subtle craft cues ok, avoid religious motifs
+Palette: sun-faded neutrals with soft coastal blues and one citrus accent. Handfeel: crisp, breathable, lightly textured. Print role: Minimal
+Optional follow-up (if prints not "None"): print families, scale, techniques, cultural/motif include or avoid
 
 9) References and assets
 Prompt (what the user sees)

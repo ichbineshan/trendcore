@@ -40,7 +40,22 @@ Make the rules actionable. Avoid generic lines like "good quality" or "stylish".
 Example
 Emotion: fresh, confident, effortless. Design rules: clean silhouette, comfort mobility, one subtle signature detail
 
-4) Target age
+4) Design language and no-go's
+Prompt (what the user sees)
+Define the signature shapes — hero silhouettes and what to avoid.
+Form fields (use for ask_question question_data; id: design-language)
+- Design Language description: Define the key silhouettes and design constraints for this collection.
+- Hero Silhouettes: text, placeholder: e.g., Relaxed oversized blazer, description: Use "," to add multiple silhouettes (up to 3)
+- Details to Avoid: text, placeholder: e.g., Heavy embellishments, description: Use "," to add multiple details (up to 3)
+What to include in your answer
+Up to 3 hero silhouettes (signature shapes). Up to 3 details to avoid. Use commas to add multiple.
+Good answer guidance
+Hero silhouettes must be specific. Must-avoid should include your deal-breakers.
+Example
+Hero silhouettes: relaxed shirt dress with tie waist, boxy co-ord with wide-leg trouser, cropped overshirt with utility pockets. Details to avoid: heavy ruffles, deep plunges, shiny satins
+
+
+5) Target age
 Prompt (what the user sees)
 What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
 What to include in your answer
@@ -51,7 +66,7 @@ Pick the main range first. If you truly need two ranges, mention the primary and
 Example
 Primary: 25–34
 
-5) Range architecture
+6) Range architecture
 Prompt (what the user sees)
 What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
 What to include in your answer
@@ -65,7 +80,7 @@ Example
 Co-ords 18, dresses 22, tops 28, pants 14, light layers 10
 Use-cases: workwear, brunch, travel weekend, smart casual evening
 
-6) Fit guardrails
+7) Fit guardrails
 Prompt (what the user sees)
 Tell me sizing and fit intent by category so the outputs don't feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
 What to include in your answer
@@ -81,22 +96,6 @@ Tops easy fit, slightly boxy
 Pants high-rise straight or wide
 Layers cropped or hip-length, light and structured
 
-7) Design language and no-go's
-Prompt (what the user sees)
-Define your signature shapes and what we should never generate. This keeps the collection consistent and avoids irrelevant outputs.
-What to include in your answer
-3 hero silhouettes (the signature shapes)
-Example formats: "relaxed shirt dress with tie waist", "boxy co-ord with wide-leg trouser"
-3 details to avoid completely
-Examples: heavy ruffles, deep plunges, shiny satin, loud logos
-Must-avoid list (hard constraints)
-Examples: no sheer fabrics, no bodycon, no synthetic fibers, no heavy embellishment
-Good answer guidance
-Hero silhouettes must be specific. Must-avoid should include your deal-breakers.
-Example
-Hero silhouettes: relaxed shirt dress with tie waist, boxy co-ord with wide-leg trouser, cropped overshirt with utility pockets
-Avoid details: heavy ruffles, deep plunges, shiny satins
-Must-avoid: no sheer fabrics, no bodycon, no heavy embellishment, no large logos, no synthetic fibers
 
 8) Color, materials, and surface direction
 Prompt (what the user sees)

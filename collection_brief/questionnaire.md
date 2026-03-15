@@ -16,15 +16,16 @@ Women, SS26, May–June 2026, India + SEA
 
 2) Customer persona
 Prompt (what the user sees)
-Who exactly are we designing for. Think about the real customer and their lifestyle, because this affects silhouettes, styling, and theme direction.
+Who are we designing for? Select the customer segment or describe your target persona.
+Form fields (use for ask_question question_data; id: customer-persona)
+- Select customer segments: chip-select, multi, required, options: Teen / Youth (~13-17), Young Men (~18-30), Core Men (~25-50), Mature Men (~50+), Big & Tall (all ages)
+- Or describe your persona: textarea, optional, placeholder: Describe your target customer persona in your own words
 What to include in your answer
-A simple description of the customer in plain words
-Lifestyle or context (eg working, college, travel, kids play)
-Preference hints (eg comfort-first, trend-forward, premium basics)
+Select one or more customer segments (required). Optionally add a short description of the persona, lifestyle, or preferences.
 Good answer guidance
 Avoid "everyone" or "general audience". A specific customer leads to better outputs.
 Example
-Urban working women who want comfort-first but polished outfits for office + after-work plans
+Teen / Youth, Young Men; or: Urban working women who want comfort-first but polished outfits for office + after-work plans
 
 3) Target age
 Prompt (what the user sees)

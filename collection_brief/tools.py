@@ -33,7 +33,7 @@ def ask_question_tool(
         "fields": [
           {
             "id": "field_id",
-            "type": "chip-select|text|number|select|checkbox|textarea|radio",
+            "type": "chip-select|text|number|select|checkbox|textarea|radio|tag-input",
             "label": "Field label",
             "required": true,
             "placeholder": "Optional placeholder",

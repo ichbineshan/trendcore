@@ -45,8 +45,8 @@ Prompt (what the user sees)
 Define the signature shapes — hero silhouettes and what to avoid.
 Form fields (use for ask_question question_data; id: design-language)
 - Design Language description: Define the key silhouettes and design constraints for this collection.
-- Hero Silhouettes: text, placeholder: e.g., Relaxed oversized blazer, description: Use "," to add multiple silhouettes (up to 3)
-- Details to Avoid: text, placeholder: e.g., Heavy embellishments, description: Use "," to add multiple details (up to 3)
+- Hero Silhouettes: tag-input, required, maxTags: 3, placeholder: e.g., Relaxed oversized blazer (tags must be unique)
+- Details to Avoid: tag-input, required, maxTags: 3, placeholder: e.g., Heavy embellishments, description: Use "," to add multiple details
 What to include in your answer
 Up to 3 hero silhouettes (signature shapes). Up to 3 details to avoid. Use commas to add multiple.
 Good answer guidance

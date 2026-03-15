@@ -17,6 +17,7 @@ FieldType = Literal[
     "checkbox",
     "textarea",
     "radio",
+    "tag-input",
 ]
 
 
@@ -41,6 +42,7 @@ class FormField(BaseModel):
     options: Optional[list[ChipOption]] = None
     defaultValue: Optional[str | list[str]] = None
     width: Optional[Literal["full", "half"]] = None
+    maxTags: Optional[int] = None
 
 
 class FormConfig(BaseModel):

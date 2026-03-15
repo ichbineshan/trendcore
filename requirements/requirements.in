@@ -10,12 +10,14 @@ langchain-core==0.3.76
 langchain-anthropic==0.3.14
 langchain-openai==0.3.17
 langgraph==0.6.7
+langgraph-checkpoint-postgres==2.0.21
 
 # Database
 sqlalchemy==2.0.43
 alembic==1.12.0
 psycopg2-binary==2.9.10
 asyncpg==0.28.0
+greenlet==3.2.1
 
 # Redis
 redis==6.2.0

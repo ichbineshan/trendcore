@@ -2,8 +2,8 @@
 Collection Brief Agent
 
 AI agent for conducting the collection brief questionnaire interview using tools.
-Built on LangGraph (create_react_agent), aligned with ai-genetic file_generator_agent pattern.
-Use with {"messages": [...]} like cortex streaming (e.g. agent.astream_events({"messages": messages}, version="v1")).
+Built on LangGraph (create_react_agent), aligned with cortex: checkpointer is obtained
+via get_async_postgres_saver_with_retry and passed in when running in streaming.
 """
 
 from pathlib import Path
@@ -57,18 +57,13 @@ def _build_system_message(thread_meta: dict) -> SystemMessage:
     )
 
 
-def create_collection_brief_agent(thread_meta: dict = None):
+def create_collection_brief_agent(thread_meta: dict, checkpointer):
     """
     Create a collection brief agent (LangGraph create_react_agent) for the questionnaire.
 
-    Use like cortex: pass {"messages": [HumanMessage(content=...), ...]} and call
-    agent.astream_events({"messages": messages}, version="v1").
-
     Args:
-        thread_meta: Thread metadata containing current_question and answers
-
-    Returns:
-        Compiled graph with astream_events(input_dict, version="v1")
+        thread_meta: Thread metadata (current_question, answers).
+        checkpointer: AsyncPostgresSaver from get_async_postgres_saver_with_retry(conn_string).
     """
     if thread_meta is None:
         thread_meta = {}
@@ -79,7 +74,6 @@ def create_collection_brief_agent(thread_meta: dict = None):
         temperature=0.3,
         streaming=True,
     )
-
     tools = create_collection_brief_tools(thread_meta)
     system_message = _build_system_message(thread_meta)
 
@@ -87,4 +81,5 @@ def create_collection_brief_agent(thread_meta: dict = None):
         model=model,
         prompt=system_message,
         tools=tools,
+        checkpointer=checkpointer,
     )

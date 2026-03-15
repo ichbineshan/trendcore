@@ -52,6 +52,8 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
+greenlet==3.2.1
+    # via -r requirements/requirements.in
 h11==0.16.0
     # via
     #   httpcore
@@ -104,7 +106,10 @@ langgraph==0.6.7
 langgraph-checkpoint==2.1.2
     # via
     #   langgraph
+    #   langgraph-checkpoint-postgres
     #   langgraph-prebuilt
+langgraph-checkpoint-postgres==2.0.21
+    # via -r requirements/requirements.in
 langgraph-prebuilt==0.6.5
     # via langgraph
 langgraph-sdk==0.2.15
@@ -125,6 +130,7 @@ openai==1.109.1
     # via langchain-openai
 orjson==3.11.3
     # via
+    #   langgraph-checkpoint-postgres
     #   langgraph-sdk
     #   langsmith
 ormsgpack==1.12.2
@@ -137,6 +143,10 @@ propcache==0.4.0
     # via
     #   aiohttp
     #   yarl
+psycopg==3.3.3
+    # via langgraph-checkpoint-postgres
+psycopg-pool==3.3.0
+    # via langgraph-checkpoint-postgres
 psycopg2-binary==2.9.10
     # via -r requirements/requirements.in
 pydantic==2.11.5
@@ -211,6 +221,8 @@ typing-extensions==4.15.0
     #   fastapi
     #   langchain-core
     #   openai
+    #   psycopg
+    #   psycopg-pool
     #   pydantic
     #   pydantic-core
     #   sqlalchemy

@@ -139,76 +139,81 @@ class StreamingService:
                 thread.meta['answers'] = {}
                 await self.thread_service.update_thread_meta(thread_id, thread.meta)
 
-            # Select appropriate agent; use ResponseHandler (same as cortex) for tool/stream normalization
+            # Select appropriate agent; use Postgres checkpointer per request (same as cortex)
             if is_questionnaire:
                 from collection_brief import create_collection_brief_agent
                 from collection_brief.registry import tools_registry
                 from agent_utils import ResponseHandler
+                from streaming.retry_utils import get_async_postgres_saver_with_retry
 
-                agent = create_collection_brief_agent(thread.meta)
-                messages = [HumanMessage(content=question_schema.message)]
-                response_handler = ResponseHandler(
-                    tools=tools_registry,
-                    model_name="gpt-4o",
-                )
+                async with get_async_postgres_saver_with_retry(loaded_config.postgres_url) as checkpointer:
+                    await checkpointer.setup()
+                    agent = create_collection_brief_agent(thread.meta, checkpointer=checkpointer)
+                    messages = [HumanMessage(content=question_schema.message)]
+                    response_handler = ResponseHandler(
+                        tools=tools_registry,
+                        model_name="gpt-4o",
+                    )
+                    stream_config = {"configurable": {"thread_id": str(thread_id)}}
 
-                accumulated_content = ""
-                last_tool = ""
-                async for event in agent.astream_events(
-                    {"messages": messages},
-                    version="v1",
-                ):
-                    if event.get("event") == "on_tool_start":
-                        last_tool = event.get("name", "")
-                    response = await response_handler.handle_response(event, last_tool)
+                    accumulated_content = ""
+                    last_tool = ""
+                    async for event in agent.astream_events(
+                        {"messages": messages},
+                        config=stream_config,
+                        version="v1",
+                    ):
+                        if event.get("event") == "on_tool_start":
+                            last_tool = event.get("name", "")
+                        response = await response_handler.handle_response(event, last_tool)
 
-                    if response is None:
-                        continue
+                        if response is None:
+                            continue
 
-                    try:
-                        parsed = json.loads(response)
-                    except json.JSONDecodeError:
-                        accumulated_content += response
-                        yield format_stream_event(StreamEventType.CONTENT_CHUNK, response, thread_id=str(thread_id))
-                        continue
+                        try:
+                            parsed = json.loads(response)
+                        except json.JSONDecodeError:
+                            accumulated_content += response
+                            yield format_stream_event(StreamEventType.CONTENT_CHUNK, response, thread_id=str(thread_id))
+                            continue
 
-                    event_type = parsed.get("type")
-                    if event_type == "toolStart":
-                        yield format_stream_event(
-                            StreamEventType.TOOL_CALL,
-                            json.dumps({
-                                "tool": event.get("name"),
-                                "arguments": event.get("data", {}).get("input", {}),
-                            }),
-                            thread_id=str(thread_id),
-                        )
-                    elif event_type == "toolUsed":
-                        detail = parsed.get("detail", {})
-                        await self._apply_tool_meta(thread_id, last_tool, detail, user_message)
-                        yield format_stream_event(
-                            StreamEventType.TOOL_RESULT,
-                            response,
-                            thread_id=str(thread_id),
-                        )
-                    elif event_type in ("supervisor_streaming", "streaming"):
-                        content = parsed.get("content", "")
-                        if content:
-                            accumulated_content += content
-                            yield format_stream_event(StreamEventType.CONTENT_CHUNK, content, thread_id=str(thread_id))
+                        event_type = parsed.get("type")
+                        if event_type == "toolStart":
+                            yield format_stream_event(
+                                StreamEventType.TOOL_CALL,
+                                json.dumps({
+                                    "tool": event.get("name"),
+                                    "arguments": event.get("data", {}).get("input", {}),
+                                }),
+                                thread_id=str(thread_id),
+                            )
+                        elif event_type == "toolUsed":
+                            detail = parsed.get("detail", {})
+                            await self._apply_tool_meta(thread_id, last_tool, detail, user_message)
+                            yield format_stream_event(
+                                StreamEventType.TOOL_RESULT,
+                                response,
+                                thread_id=str(thread_id),
+                            )
+                        elif event_type in ("supervisor_streaming", "streaming"):
+                            content = parsed.get("content", "")
+                            if content:
+                                accumulated_content += content
+                                yield format_stream_event(StreamEventType.CONTENT_CHUNK, content, thread_id=str(thread_id))
 
-                # Create assistant message
-                assistant_message = await self.thread_service.create_message(
-                    request=type('CreateMessageRequest', (), {
-                        'role': 'assistant',
-                        'content': {'text': accumulated_content},
-                        'parent_message_id': user_message_id,
-                        'prompt_details': {},
-                        'images': [],
-                        'user_query': None,
-                        'metadata': {},
-                    })(),
-                    thread_id=thread_id,
-                )
+                    # Create assistant message
+                    assistant_message = await self.thread_service.create_message(
+                        request=type('CreateMessageRequest', (), {
+                            'role': 'assistant',
+                            'content': {'text': accumulated_content},
+                            'parent_message_id': user_message_id,
+                            'prompt_details': {},
+                            'images': [],
+                            'user_query': None,
+                            'metadata': {},
+                        })(),
+                        thread_id=thread_id,
+                    )
 
             else:
                 # For non-questionnaire threads, raise an error or handle differently

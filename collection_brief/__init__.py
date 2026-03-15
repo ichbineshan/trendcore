@@ -10,7 +10,7 @@ All questionnaire logic is handled through the streaming chat API.
 """
 
 from .agent import create_collection_brief_agent
-from .models import ChipOption, FormConfig, FormField, FieldType
+from .models import ChipOption, FormConfig, FormField, FieldType, NestedChipOption
 from .tools import create_collection_brief_tools
 from .registry import tools_registry
 from .system_prompt import collection_brief_prompt
@@ -21,6 +21,7 @@ __all__ = [
     "FormConfig",
     "FormField",
     "FieldType",
+    "NestedChipOption",
     "create_collection_brief_tools",
     "tools_registry",
     "collection_brief_prompt",

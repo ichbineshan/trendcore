@@ -29,7 +29,7 @@ You have access to four tools:
      "fields": [
        {{
          "id": "field_id",
-         "type": "chip-select|text|number|select|checkbox|textarea|radio|tag-input",
+         "type": "chip-select|text|number|select|checkbox|textarea|radio|tag-input|nested-chip-select",
          "label": "Field label",
          "required": true,
          "placeholder": "Example text",

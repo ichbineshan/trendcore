@@ -1,4 +1,4 @@
-7) Target age
+8) Target age
 Prompt (what the user sees)
 What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
 What to include in your answer
@@ -8,20 +8,6 @@ Good answer guidance
 Pick the main range first. If you truly need two ranges, mention the primary and secondary.
 Example
 Primary: 25–34
-
-8) Range architecture
-Prompt (what the user sees)
-What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
-What to include in your answer
-Categories you want in the collection
-Approx style count per category (doesn't need to be perfect)
-Key occasions and use-cases
-Examples: workwear, travel, festive, casual weekends, school, play
-Good answer guidance
-Counts are ok to be approximate. What matters is the mix and priority.
-Example
-Co-ords 18, dresses 22, tops 28, pants 14, light layers 10
-Use-cases: workwear, brunch, travel weekend, smart casual evening
 
 9) Fit guardrails
 Prompt (what the user sees)

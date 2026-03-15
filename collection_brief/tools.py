@@ -33,12 +33,12 @@ def ask_question_tool(
         "fields": [
           {
             "id": "field_id",
-            "type": "chip-select|text|number|select|checkbox|textarea|radio|tag-input",
+            "type": "chip-select|text|number|select|checkbox|textarea|radio|tag-input|nested-chip-select",
             "label": "Field label",
             "required": true,
             "placeholder": "Optional placeholder",
             "multiSelect": false,
-            "options": [{"label": "Option", "value": "value"}]
+            "options": [{"label": "Option", "value": "value"}], "nestedOptions": [...] (for nested-chip-select)
           }
         ]
       }

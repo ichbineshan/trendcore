@@ -69,7 +69,25 @@ Example
 Palette: sun-faded neutrals with soft coastal blues and one citrus accent. Handfeel: crisp, breathable, lightly textured. Print role: Minimal
 Optional follow-up (if prints not "None"): print families, scale, techniques, cultural/motif include or avoid
 
-6) Theme generation count
+
+6) Range architecture
+Prompt (what the user sees)
+What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
+Form fields (use for ask_question question_data; id: range-architecture)
+- Categories: nested-chip-select, multiSelect: true, required. nestedOptions (each { label, value, multiSelect?, children? }):
+  - Top level: KIDS WEAR, MENS WEAR, WOMENS WEAR.
+  - KIDS WEAR children: BIG BOYS, BIG GIRLS, BOYS, GIRLS, YOUTH BOYS, YOUTH GIRLS, KIDS BOYS, KIDS GIRLS, UNISEX. Each of these has children: BOTTOMS, SETS, TOPS, WINTER WEAR.
+  - MENS WEAR children: BOTTOMS, SETS, TOPS, WINTER WEAR.
+  - WOMENS WEAR children: BOTTOMS, SETS, TOPS, WINTER WEAR.
+  Use value slugs: kids-wear, mens-wear, womens-wear; big-boys, big-girls, boys, girls, youth-boys, youth-girls, kids-boys, kids-girls, unisex; bottoms, sets, tops, winter-wear.
+What to include in your answer
+Select categories and sub-categories from the nested chip-select. Add approx style count per category and key occasions/use-cases (workwear, travel, festive, etc.).
+Good answer guidance
+Counts are ok to be approximate. What matters is the mix and priority.
+Example
+Co-ords 18, dresses 22, tops 28, pants 14, light layers 10. Use-cases: workwear, brunch, travel weekend, smart casual evening
+
+7) Theme generation count
 Prompt (what the user sees)
 Almost done! How many themes do you want to generate?
 Form fields (use for ask_question question_data; id: theme-count, submitLabel: Generate Themes)

@@ -1,7 +1,8 @@
 """
 Pydantic models for collection brief form configuration.
 
-Mirrors the frontend TypeScript interfaces: FieldType, ChipOption, FormField, FormConfig.
+Mirrors the frontend TypeScript interfaces: FieldType, ChipOption, NestedChipOption,
+FormField, FormConfig.
 """
 
 from typing import Literal, Optional
@@ -18,6 +19,7 @@ FieldType = Literal[
     "textarea",
     "radio",
     "tag-input",
+    "nested-chip-select",
 ]
 
 
@@ -26,6 +28,18 @@ class ChipOption(BaseModel):
 
     label: str
     value: str
+
+
+class NestedChipOption(BaseModel):
+    """Option for nested-chip-select fields; can have children for hierarchy."""
+
+    label: str
+    value: str
+    multiSelect: Optional[bool] = None
+    children: Optional[list["NestedChipOption"]] = None
+
+
+NestedChipOption.model_rebuild()
 
 
 class FormField(BaseModel):
@@ -40,6 +54,7 @@ class FormField(BaseModel):
     prefix: Optional[str] = None
     multiSelect: Optional[bool] = None
     options: Optional[list[ChipOption]] = None
+    nestedOptions: Optional[list[NestedChipOption]] = None
     defaultValue: Optional[str | list[str]] = None
     width: Optional[Literal["full", "half"]] = None
     maxTags: Optional[int] = None
@@ -53,3 +68,4 @@ class FormConfig(BaseModel):
     description: Optional[str] = None
     submitLabel: Optional[str] = None
     fields: list[FormField]
+    readOnly: Optional[bool] = None

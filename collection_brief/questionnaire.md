@@ -44,7 +44,6 @@ Emotion: fresh, confident, effortless. Design rules: clean silhouette, comfort m
 Prompt (what the user sees)
 Define the signature shapes — hero silhouettes and what to avoid.
 Form fields (use for ask_question question_data; id: design-language)
-- Design Language description: Define the key silhouettes and design constraints for this collection.
 - Hero Silhouettes: tag-input, required, maxTags: 3, placeholder: e.g., Relaxed oversized blazer (tags must be unique)
 - Details to Avoid: tag-input, required, maxTags: 3, placeholder: e.g., Heavy embellishments, description: Use "," to add multiple details
 What to include in your answer

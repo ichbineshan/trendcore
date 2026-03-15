@@ -24,21 +24,18 @@ You have access to three tools:
      "id": "question_id",
      "title": "Question title",
      "description": "Brief description",
-     "sections": [
+     "submitLabel": "Continue",
+     "fields": [
        {{
-         "fields": [
-           {{
-             "id": "field_id",
-             "type": "text|textarea|radio|checkbox",
-             "label": "Field label",
-             "placeholder": "Example text",
-             "required": true,
-             "options": [{{"label": "Option", "value": "value"}}]  // for radio/checkbox only
-           }}
-         ]
+         "id": "field_id",
+         "type": "chip-select|text|number|select|checkbox|textarea|radio",
+         "label": "Field label",
+         "required": true,
+         "placeholder": "Example text",
+         "multiSelect": false,
+         "options": [{{"label": "Option", "value": "value"}}]
        }}
-     ],
-     "submitLabel": "Continue"
+     ]
    }}
 
 3. When the user provides an answer, call save_answer with the question_id, question_number, and their answer_text

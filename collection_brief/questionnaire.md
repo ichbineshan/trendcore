@@ -1,12 +1,14 @@
 Collection Brief Questions
 1) Collection snapshot
 Prompt (what the user sees)
-In 1–2 lines, tell me what collection we’re building. This sets the base context for everything that follows.
+In 1–2 lines, tell me what collection we're building. This sets the base context for everything that follows.
+Form fields (use for ask_question question_data; id: collection-snapshot)
+- Line: chip-select, single, required, options: Women, Men, Kids
+- Season: chip-select, single, required, options: Spring/Summer, Fall/Winter, Resort/Cruise, Pre-Fall, Holiday, Year-Round
+- Year: chip-select, single, optional, options: 2025, 2026, 2027
+- Target Regions: chip-select, multi, optional, options: India, UAE, USA, UK, Europe, South Asia, Southeast Asia, Global
 What to include in your answer
-Line: Men / Women / Kids (pick one)
-Season + year (eg SS26, AW26)
-Launch window (eg May–June 2026, capture only)
-Target regions (we’ll suggest based on Brand Identity, you just confirm)
+Line (pick one), Season + year (eg SS26, AW26), launch window (eg May–June 2026, capture only), target regions (confirm from options).
 Good answer guidance
 Keep it factual and short, no story yet.
 Example
@@ -20,7 +22,7 @@ A simple description of the customer in plain words
 Lifestyle or context (eg working, college, travel, kids play)
 Preference hints (eg comfort-first, trend-forward, premium basics)
 Good answer guidance
-Avoid “everyone” or “general audience”. A specific customer leads to better outputs.
+Avoid "everyone" or "general audience". A specific customer leads to better outputs.
 Example
 Urban working women who want comfort-first but polished outfits for office + after-work plans
 
@@ -37,14 +39,14 @@ Primary: 25–34
 
 4) Creative north star
 Prompt (what the user sees)
-Now define the “feel” and the non-negotiables. These are rules the AI will follow while generating themes, moodboards, designs, and artworks.
+Now define the "feel" and the non-negotiables. These are rules the AI will follow while generating themes, moodboards, designs, and artworks.
 What to include in your answer
 Emotion to feel (2–4 words)
 Examples: fresh, confident, playful, calm, bold, elevated
 Absolutely true in every design (2–3 rules)
 Think: the collection DNA that should show up in every piece
 Good answer guidance
-Make the rules actionable. Avoid generic lines like “good quality” or “stylish”.
+Make the rules actionable. Avoid generic lines like "good quality" or "stylish".
 Example
 Emotion: fresh, confident, effortless
 Always true: clean silhouette, comfort mobility, one subtle signature detail
@@ -54,7 +56,7 @@ Prompt (what the user sees)
 What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
 What to include in your answer
 Categories you want in the collection
-Approx style count per category (doesn’t need to be perfect)
+Approx style count per category (doesn't need to be perfect)
 Key occasions and use-cases
 Examples: workwear, travel, festive, casual weekends, school, play
 Good answer guidance
@@ -65,13 +67,13 @@ Use-cases: workwear, brunch, travel weekend, smart casual evening
 
 6) Fit guardrails
 Prompt (what the user sees)
-Tell me sizing and fit intent by category so the outputs don’t feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
+Tell me sizing and fit intent by category so the outputs don't feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
 What to include in your answer
 Size range (select sizes like XS, S, M, L, XL, XXL)
 Fit intent by category
 Fit words to use: relaxed, regular, boxy, straight, tapered, oversized, comfort-fit
 Good answer guidance
-Match fit to climate and customer lifestyle. If you want “relaxed but polished”, say so.
+Match fit to climate and customer lifestyle. If you want "relaxed but polished", say so.
 Example
 Sizes: XS–XXL
 Dresses relaxed with optional waist definition
@@ -79,12 +81,12 @@ Tops easy fit, slightly boxy
 Pants high-rise straight or wide
 Layers cropped or hip-length, light and structured
 
-7) Design language and no-go’s
+7) Design language and no-go's
 Prompt (what the user sees)
 Define your signature shapes and what we should never generate. This keeps the collection consistent and avoids irrelevant outputs.
 What to include in your answer
 3 hero silhouettes (the signature shapes)
-Example formats: “relaxed shirt dress with tie waist”, “boxy co-ord with wide-leg trouser”
+Example formats: "relaxed shirt dress with tie waist", "boxy co-ord with wide-leg trouser"
 3 details to avoid completely
 Examples: heavy ruffles, deep plunges, shiny satin, loud logos
 Must-avoid list (hard constraints)
@@ -113,7 +115,7 @@ Example
 Palette: sun-faded neutrals with soft coastal blues and one citrus accent
 Handfeel: crisp, breathable, lightly textured, structured drape
 Print role: minimal, hero-only around 15–20%
-Only if prints are not “none”, answer these
+Only if prints are not "none", answer these
 Print families allowed (eg stripes, botanicals, geometrics, watercolor)
 Print scale preference (micro, medium, oversized, mixed)
 Techniques allowed (screen print, embroidery, applique, foil)
@@ -126,7 +128,7 @@ Motifs: subtle craft cues ok, avoid religious motifs
 
 9) References and assets
 Prompt (what the user sees)
-Share references that represent what “right” looks like. This helps us match your taste accurately. After that, upload your logo and reference images.
+Share references that represent what "right" looks like. This helps us match your taste accurately. After that, upload your logo and reference images.
 What to include in your answer
 At least 3 references
 Tag each reference with what it represents

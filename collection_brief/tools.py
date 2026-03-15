@@ -5,16 +5,18 @@ Tools for the collection brief agent to interact with the questionnaire.
 Uses langchain_core.tools @tool decorator.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict, Union
 
 from langchain_core.tools import tool
+
+from .models import FormConfig
 
 
 @tool("ask_question")
 def ask_question_tool(
     question_number: int,
     question_id: str,
-    question_data: Dict[str, Any],
+    question_data: Union[FormConfig, Dict[str, Any]],
 ) -> Dict[str, Any]:
     """
     Use this tool to ask the next question in the collection brief questionnaire.
@@ -22,33 +24,37 @@ def ask_question_tool(
     You must provide:
     - question_number: The question number (e.g., 1, 2, 3...)
     - question_id: The question ID from the questionnaire (e.g., 'collection_snapshot', 'customer_persona')
-    - question_data: The complete question data as JSON with the structure:
+    - question_data: Form config as JSON with the structure:
       {
+        "id": "form-id",
         "title": "Question title",
-        "description": "Question description",
-        "sections": [
+        "description": "Optional description",
+        "submitLabel": "Continue",
+        "fields": [
           {
-            "fields": [
-              {
-                "id": "field_id",
-                "type": "text|textarea|radio|checkbox",
-                "label": "Field label",
-                "placeholder": "Placeholder text",
-                "required": true|false,
-                "options": [...] (for radio/checkbox)
-              }
-            ]
+            "id": "field_id",
+            "type": "chip-select|text|number|select|checkbox|textarea|radio",
+            "label": "Field label",
+            "required": true,
+            "placeholder": "Optional placeholder",
+            "multiSelect": false,
+            "options": [{"label": "Option", "value": "value"}]
           }
         ]
       }
 
     The tool will format and return the question for display.
     """
+    config = (
+        FormConfig.model_validate(question_data)
+        if isinstance(question_data, dict)
+        else question_data
+    )
     return {
         "type": "form",
         "question_number": question_number,
         "question_id": question_id,
-        "form_schema": question_data,
+        "form_schema": config.model_dump(mode="json"),
     }
 
 

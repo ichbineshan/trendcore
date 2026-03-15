@@ -53,4 +53,21 @@ tools_registry = {
             },
         },
     },
+    "review_and_finish_questionnaire": {
+        "name": "Review and Finish Questionnaire",
+        "description": "Shows the final review screen with all answers (read-only) and a Create Design button.",
+        "response_format": {
+            "type": "toolStart",
+            "message": {
+                "action": "Review and finish",
+                "param": "",
+            },
+            "detail": {
+                "form_type": "$form_type",
+                "form_schema": "$form_schema",
+                "submit_label": "$submit_label",
+                "read_only": "$read_only",
+            },
+        },
+    },
 }

@@ -58,6 +58,42 @@ def ask_question_tool(
     }
 
 
+@tool("review_and_finish_questionnaire")
+def review_and_finish_questionnaire_tool(
+    question_data: Union[FormConfig, Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    Use this tool to show the final review screen when the questionnaire is complete.
+
+    Call this when all questions have been answered and the user is ready to review
+    and finish. Presents all answers in a read-only, well-formatted summary with
+    a "Create Design" button.
+
+    You must provide question_data using the same form config structure as ask_question:
+    - id: e.g. "review-and-finish"
+    - title: e.g. "Review your answers"
+    - submitLabel: "Create Design"
+    - fields: One FormField per completed question. For each, use:
+      id: question_id, type: "text", label: question label (e.g. "Collection Snapshot"),
+      defaultValue: the user's answer (displayed read-only).
+    """
+    config = (
+        FormConfig.model_validate(question_data)
+        if isinstance(question_data, dict)
+        else question_data
+    )
+    form_schema = config.model_dump(mode="json")
+    # Signal to frontend: render this form read-only and show field.defaultValue in each field
+    form_schema["readOnly"] = True
+    return {
+        "type": "review_and_finish",
+        "form_type": "review_and_finish",
+        "form_schema": form_schema,
+        "submit_label": "Create Design",
+        "read_only": True,
+    }
+
+
 def create_collection_brief_tools(thread_meta: Dict[str, Any] = None) -> list:
     """Create the collection brief tools with thread context."""
     if thread_meta is None:
@@ -93,7 +129,6 @@ def create_collection_brief_tools(thread_meta: Dict[str, Any] = None) -> list:
 
         Call this tool:
         - When the user asks to review their answers
-        - **IMPORTANT: At the end of the questionnaire when all questions have been answered** to show a summary
         - To check which questions have been completed
         """
         answers = thread_meta.get("answers", {})
@@ -106,4 +141,9 @@ def create_collection_brief_tools(thread_meta: Dict[str, Any] = None) -> list:
             "message": f"Retrieved {len(answers)} answer(s)",
         }
 
-    return [ask_question_tool, save_answer_tool, read_answers_tool]
+    return [
+        ask_question_tool,
+        save_answer_tool,
+        read_answers_tool,
+        review_and_finish_questionnaire_tool,
+    ]

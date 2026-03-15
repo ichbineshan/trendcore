@@ -27,18 +27,7 @@ Avoid "everyone" or "general audience". A specific customer leads to better outp
 Example
 Teen / Youth, Young Men; or: Urban working women who want comfort-first but polished outfits for office + after-work plans
 
-3) Target age
-Prompt (what the user sees)
-What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
-What to include in your answer
-One primary age range
-For Kids, share age in years
-Good answer guidance
-Pick the main range first. If you truly need two ranges, mention the primary and secondary.
-Example
-Primary: 25–34
-
-4) Creative north star
+3) Creative north star
 Prompt (what the user sees)
 Creative North Star
 Form fields (use for ask_question question_data; id: creative-north-star)
@@ -50,6 +39,17 @@ Good answer guidance
 Make the rules actionable. Avoid generic lines like "good quality" or "stylish".
 Example
 Emotion: fresh, confident, effortless. Design rules: clean silhouette, comfort mobility, one subtle signature detail
+
+4) Target age
+Prompt (what the user sees)
+What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
+What to include in your answer
+One primary age range
+For Kids, share age in years
+Good answer guidance
+Pick the main range first. If you truly need two ranges, mention the primary and secondary.
+Example
+Primary: 25–34
 
 5) Range architecture
 Prompt (what the user sees)

@@ -81,7 +81,17 @@ Pick the main range first. If you truly need two ranges, mention the primary and
 Example
 Primary: 25–34
 
-7) Range architecture
+7) Theme generation count
+Prompt (what the user sees)
+Almost done! How many themes do you want to generate?
+Form fields (use for ask_question question_data; id: theme-count, submitLabel: Generate Themes)
+- How many themes should we generate?: chip-select, single, required, options: 1, 2, 3, 4, 5
+What to include in your answer
+Pick one number from 1 to 5.
+Example
+4
+
+8) Range architecture
 Prompt (what the user sees)
 What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
 What to include in your answer
@@ -95,7 +105,7 @@ Example
 Co-ords 18, dresses 22, tops 28, pants 14, light layers 10
 Use-cases: workwear, brunch, travel weekend, smart casual evening
 
-8) Fit guardrails
+9) Fit guardrails
 Prompt (what the user sees)
 Tell me sizing and fit intent by category so the outputs don't feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
 What to include in your answer
@@ -111,7 +121,7 @@ Tops easy fit, slightly boxy
 Pants high-rise straight or wide
 Layers cropped or hip-length, light and structured
 
-9) References and assets
+10) References and assets
 Prompt (what the user sees)
 Share references that represent what "right" looks like. This helps us match your taste accurately. After that, upload your logo and reference images.
 What to include in your answer
@@ -128,10 +138,3 @@ Uploads
 Compulsory: brand logo, reference images
 Optional: past bestsellers, competitor screenshots, fabric swatches, print artwork, brand guideline
 
-10) Theme generation count
-Prompt (what the user sees)
-How many different theme directions do you want to explore. More themes gives variety, fewer themes gives speed and tighter focus.
-What to include in your answer
-Pick one number: 1, 2, 3, 4, 5
-Example
-3

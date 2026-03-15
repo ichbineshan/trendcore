@@ -1,14 +1,12 @@
 Collection Brief Questions
 1) Collection snapshot
 Prompt (what the user sees)
-In 1–2 lines, tell me what collection we're building. This sets the base context for everything that follows.
-Form fields (use for ask_question question_data; id: collection-snapshot)
-- Line: chip-select, single, required, options: Women, Men, Kids
-- Season: chip-select, single, required, options: Spring/Summer, Fall/Winter, Resort/Cruise, Pre-Fall, Holiday, Year-Round
-- Year: chip-select, single, optional, options: 2025, 2026, 2027
-- Target Regions: chip-select, multi, optional, options: India, UAE, USA, UK, Europe, South Asia, Southeast Asia, Global
+In 1–2 lines, tell me what collection we’re building. This sets the base context for everything that follows.
 What to include in your answer
-Line (pick one), Season + year (eg SS26, AW26), launch window (eg May–June 2026, capture only), target regions (confirm from options).
+Line: Men / Women / Kids (pick one)
+Season + year (eg SS26, AW26)
+Launch window (eg May–June 2026, capture only)
+Target regions (we’ll suggest based on Brand Identity, you just confirm)
 Good answer guidance
 Keep it factual and short, no story yet.
 Example
@@ -16,83 +14,137 @@ Women, SS26, May–June 2026, India + SEA
 
 2) Customer persona
 Prompt (what the user sees)
-Who are we designing for? Select the customer segment or describe your target persona.
-Form fields (use for ask_question question_data; id: customer-persona)
-- Select customer segments: chip-select, multi, required, options: Teen / Youth (~13-17), Young Men (~18-30), Core Men (~25-50), Mature Men (~50+), Big & Tall (all ages)
-- Or describe your persona: textarea, optional, placeholder: Describe your target customer persona in your own words
+Who exactly are we designing for. Think about the real customer and their lifestyle, because this affects silhouettes, styling, and theme direction.
 What to include in your answer
-Select one or more customer segments (required). Optionally add a short description of the persona, lifestyle, or preferences.
+A simple description of the customer in plain words
+Lifestyle or context (eg working, college, travel, kids play)
+Preference hints (eg comfort-first, trend-forward, premium basics)
 Good answer guidance
-Avoid "everyone" or "general audience". A specific customer leads to better outputs.
+Avoid “everyone” or “general audience”. A specific customer leads to better outputs.
 Example
-Teen / Youth, Young Men; or: Urban working women who want comfort-first but polished outfits for office + after-work plans
+Urban working women who want comfort-first but polished outfits for office + after-work plans
 
-3) Creative north star
+3) Target age
 Prompt (what the user sees)
-Creative North Star
-Form fields (use for ask_question question_data; id: creative-north-star)
-- Emotion to feel: text, required, placeholder: e.g. Bold yet refined
-- Design rules: textarea, required, description: Things that must be true in every design, placeholder: e.g. Every design must feature a hero silhouette / e.g. Use only warm neutrals for base colors
+What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
 What to include in your answer
-Emotion to feel (2–4 words). Design rules: 2–3 things that must be true in every design.
+One primary age range
+For Kids, share age in years
 Good answer guidance
-Make the rules actionable. Avoid generic lines like "good quality" or "stylish".
+Pick the main range first. If you truly need two ranges, mention the primary and secondary.
 Example
-Emotion: fresh, confident, effortless. Design rules: clean silhouette, comfort mobility, one subtle signature detail
+Primary: 25–34
 
-4) Design language and no-go's
+4) Creative north star
 Prompt (what the user sees)
-Define the signature shapes — hero silhouettes and what to avoid.
-Form fields (use for ask_question question_data; id: design-language)
-- Hero Silhouettes: tag-input, required, maxTags: 3, placeholder: e.g., Relaxed oversized blazer (tags must be unique)
-- Details to Avoid: tag-input, required, maxTags: 3, placeholder: e.g., Heavy embellishments, description: Use "," to add multiple details
+Now define the “feel” and the non-negotiables. These are rules the AI will follow while generating themes, moodboards, designs, and artworks.
 What to include in your answer
-Up to 3 hero silhouettes (signature shapes). Up to 3 details to avoid. Use commas to add multiple.
+Emotion to feel (2–4 words)
+Examples: fresh, confident, playful, calm, bold, elevated
+Absolutely true in every design (2–3 rules)
+Think: the collection DNA that should show up in every piece
 Good answer guidance
-Hero silhouettes must be specific. Must-avoid should include your deal-breakers.
+Make the rules actionable. Avoid generic lines like “good quality” or “stylish”.
 Example
-Hero silhouettes: relaxed shirt dress with tie waist, boxy co-ord with wide-leg trouser, cropped overshirt with utility pockets. Details to avoid: heavy ruffles, deep plunges, shiny satins
+Emotion: fresh, confident, effortless
+Always true: clean silhouette, comfort mobility, one subtle signature detail
 
-5) Color, materials, and surface direction
-Prompt (what the user sees)
-Describe the color palette, material direction, and role of prints.
-Form fields (use for ask_question question_data; id: color-materials)
-- Color & Materials section description: Describe the color palette, material direction, and role of prints.
-- Palette Intent: text, placeholder: e.g. sun-faded neutrals, jewel-toned, soft pastels
-- Material Handfeel: text, placeholder: e.g. crisp, airy, dry-touch, fluid, structured, textured
-- Role of Prints: chip-select, single, required, options: None, Minimal, Hero only, Throughout
-What to include in your answer
-Palette intent (mood and colors). Material handfeel (crisp, airy, etc.). Role of prints: pick one.
-Good answer guidance
-Palette should communicate feeling and contrast strategy, not just color names.
-Example
-Palette: sun-faded neutrals with soft coastal blues and one citrus accent. Handfeel: crisp, breathable, lightly textured. Print role: Minimal
-Optional follow-up (if prints not "None"): print families, scale, techniques, cultural/motif include or avoid
-
-
-6) Range architecture
+5) Range architecture
 Prompt (what the user sees)
 What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
-Form fields (use for ask_question question_data; id: range-architecture)
-- Categories: nested-chip-select, multiSelect: true, required. nestedOptions (each { label, value, multiSelect?, children? }):
-  - Top level: KIDS WEAR, MENS WEAR, WOMENS WEAR.
-  - KIDS WEAR children: BIG BOYS, BIG GIRLS, BOYS, GIRLS, YOUTH BOYS, YOUTH GIRLS, KIDS BOYS, KIDS GIRLS, UNISEX. Each of these has children: BOTTOMS, SETS, TOPS, WINTER WEAR.
-  - MENS WEAR children: BOTTOMS, SETS, TOPS, WINTER WEAR.
-  - WOMENS WEAR children: BOTTOMS, SETS, TOPS, WINTER WEAR.
-  Use value slugs: kids-wear, mens-wear, womens-wear; big-boys, big-girls, boys, girls, youth-boys, youth-girls, kids-boys, kids-girls, unisex; bottoms, sets, tops, winter-wear.
 What to include in your answer
-Select categories and sub-categories from the nested chip-select. Add approx style count per category and key occasions/use-cases (workwear, travel, festive, etc.).
+Categories you want in the collection
+Approx style count per category (doesn’t need to be perfect)
+Key occasions and use-cases
+Examples: workwear, travel, festive, casual weekends, school, play
 Good answer guidance
 Counts are ok to be approximate. What matters is the mix and priority.
 Example
-Co-ords 18, dresses 22, tops 28, pants 14, light layers 10. Use-cases: workwear, brunch, travel weekend, smart casual evening
+Co-ords 18, dresses 22, tops 28, pants 14, light layers 10
+Use-cases: workwear, brunch, travel weekend, smart casual evening
 
-7) Theme generation count
+6) Fit guardrails
 Prompt (what the user sees)
-Almost done! How many themes do you want to generate?
-Form fields (use for ask_question question_data; id: theme-count, submitLabel: Generate Themes)
-- How many themes should we generate?: chip-select, single, required, options: 1, 2, 3, 4, 5
+Tell me sizing and fit intent by category so the outputs don’t feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
 What to include in your answer
-Pick one number from 1 to 5.
+Size range (select sizes like XS, S, M, L, XL, XXL)
+Fit intent by category
+Fit words to use: relaxed, regular, boxy, straight, tapered, oversized, comfort-fit
+Good answer guidance
+Match fit to climate and customer lifestyle. If you want “relaxed but polished”, say so.
 Example
-4
+Sizes: XS–XXL
+Dresses relaxed with optional waist definition
+Tops easy fit, slightly boxy
+Pants high-rise straight or wide
+Layers cropped or hip-length, light and structured
+
+7) Design language and no-go’s
+Prompt (what the user sees)
+Define your signature shapes and what we should never generate. This keeps the collection consistent and avoids irrelevant outputs.
+What to include in your answer
+3 hero silhouettes (the signature shapes)
+Example formats: “relaxed shirt dress with tie waist”, “boxy co-ord with wide-leg trouser”
+3 details to avoid completely
+Examples: heavy ruffles, deep plunges, shiny satin, loud logos
+Must-avoid list (hard constraints)
+Examples: no sheer fabrics, no bodycon, no synthetic fibers, no heavy embellishment
+Good answer guidance
+Hero silhouettes must be specific. Must-avoid should include your deal-breakers.
+Example
+Hero silhouettes: relaxed shirt dress with tie waist, boxy co-ord with wide-leg trouser, cropped overshirt with utility pockets
+Avoid details: heavy ruffles, deep plunges, shiny satins
+Must-avoid: no sheer fabrics, no bodycon, no heavy embellishment, no large logos, no synthetic fibers
+
+8) Color, materials, and surface direction
+Prompt (what the user sees)
+Describe the look and tactile feel. This guides palette selection, fabric recommendations, and surface design like prints, embroidery, and embellishment.
+What to include in your answer
+Palette intent in plain words
+Describe mood: sun-faded, jewel-toned, stormy, soft pastels, monochrome
+Material handfeel direction
+Words like: crisp, airy, dry-touch, fluid, structured, textured
+Role of prints in the collection
+Choose one: none, minimal, hero-only, print-led
+If possible, add a rough % like 15–20%
+Good answer guidance
+Palette should communicate feeling and contrast strategy, not just color names.
+Example
+Palette: sun-faded neutrals with soft coastal blues and one citrus accent
+Handfeel: crisp, breathable, lightly textured, structured drape
+Print role: minimal, hero-only around 15–20%
+Only if prints are not “none”, answer these
+Print families allowed (eg stripes, botanicals, geometrics, watercolor)
+Print scale preference (micro, medium, oversized, mixed)
+Techniques allowed (screen print, embroidery, applique, foil)
+Cultural/motif include or avoid (avoid religious motifs, avoid slogans, etc)
+Example
+Families: watercolor stripes, abstract botanical linework, minimal geometrics
+Scale: micro and medium, one oversized hero max
+Techniques: screen print yes, light embroidery yes, foil no, heavy beadwork no
+Motifs: subtle craft cues ok, avoid religious motifs
+
+9) References and assets
+Prompt (what the user sees)
+Share references that represent what “right” looks like. This helps us match your taste accurately. After that, upload your logo and reference images.
+What to include in your answer
+At least 3 references
+Tag each reference with what it represents
+Tags: silhouette, detailing, styling, palette, print
+Good answer guidance
+References without tags often get interpreted incorrectly. Tags make it precise.
+Example
+Ref 1 silhouette: relaxed shirt dress tie waist
+Ref 2 detailing: pocket geometry + topstitch
+Ref 3 styling: airy layering proportions
+Uploads
+Compulsory: brand logo, reference images
+Optional: past bestsellers, competitor screenshots, fabric swatches, print artwork, brand guideline
+
+10) Theme generation count
+Prompt (what the user sees)
+How many different theme directions do you want to explore. More themes gives variety, fewer themes gives speed and tighter focus.
+What to include in your answer
+Pick one number: 1, 2, 3, 4, 5
+Example
+3

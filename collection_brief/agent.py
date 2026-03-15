@@ -74,7 +74,7 @@ def create_collection_brief_agent(thread_meta: dict = None):
         thread_meta = {}
 
     model = ChatOpenAI(
-        model="gpt-4o",
+        model="gpt-5.4",
         api_key=loaded_config.openai_api_key,
         temperature=0.3,
         streaming=True,

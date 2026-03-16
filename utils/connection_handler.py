@@ -1,18 +1,27 @@
+import asyncio
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Callable, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import (
+    OperationalError,
+    DisconnectionError,
+    TimeoutError as SQLAlchemyTimeoutError,
+    ResourceClosedError,
+    InvalidRequestError
+)
 
 from config.settings import loaded_config
+
 from config.logging import logger
 
 
 class ConnectionHandler:
-    """Handles database connection and session management."""
 
-    def __init__(self, connection_manager=None):
+    def __init__(self, connection_manager=None, event_bridge=None):
         self._session: Optional[AsyncSession] = None
         self._connection_manager = connection_manager
+
 
     @property
     def session(self):
@@ -20,6 +29,8 @@ class ConnectionHandler:
             session_factory = self._connection_manager.get_session_factory()
             self._session = session_factory()
         return self._session
+
+
 
     async def session_commit(self):
         await self.session.commit()
@@ -31,10 +42,6 @@ class ConnectionHandler:
 
 @asynccontextmanager
 async def get_connection_handler_for_app():
-    """Get connection handler for the main database."""
-    from utils.load_config import ensure_connection_manager_initialized
-    await ensure_connection_manager_initialized()
-
     connection_handler = ConnectionHandler(
         connection_manager=loaded_config.connection_manager
     )
@@ -44,15 +51,13 @@ async def get_connection_handler_for_app():
         await connection_handler.close()
 
 
-async def get_connection_handler_for_app_dependency():
-    """Dependency injection for FastAPI routes."""
-    from utils.load_config import ensure_connection_manager_initialized
-    await ensure_connection_manager_initialized()
-
+@asynccontextmanager
+async def get_connection_handler_for_locksmith():
     connection_handler = ConnectionHandler(
-        connection_manager=loaded_config.connection_manager
+        connection_manager=loaded_config.connection_manager_locksmith
     )
     try:
         yield connection_handler
     finally:
         await connection_handler.close()
+

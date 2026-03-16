@@ -11,6 +11,13 @@ from alembic import context
 from config.settings import loaded_config
 from utils.sqlalchemy import Base
 from threads.models import Thread, ThreadMessage, Task  # Import all models
+import brand.models
+import collection.models
+import themes.models
+import trend.models
+import moodboard.models
+import styles.models
+
 
 # this is the Alembic Config object
 config = context.config

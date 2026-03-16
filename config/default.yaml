@@ -1,15 +1,92 @@
-# Application
-env: local
-port: 8001
-host: 0.0.0.0
-mode: server
+env: "local"
+port: 8097
+host: "localhost"
 debug: true
+mode: "server"
+server_type: "night_eye"
+postgres_nighteye_read_write: "postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/trend-core"
+mongo_night_eye_read_write: "mongodb://localhost:27017/brand_identity"
+redis_cerebrum_url: "redis://127.0.0.1:6379/3?decode_responses=true"
+redis_fex_hiruzen_read_write: "redis://127.0.0.1:6379/3?decode_responses=true"
 
-# Database
+# github config
 postgres_url: postgresql://agentix_user:password@localhost:5432/trend_analysis
-
-# Redis
 redis_url: redis://localhost:6379/0
 
-# AI Models
+api_domain: ""
+openai_gpt4_key: ""
+google_genai_api_key: ""
+
+realm: "fexz0"
+storage_file_assets_private: "gs://local"
+almanac_main_private_url: "http://localhost:8099"
+locksmith_private_url: "http://localhost:8093/"
+
+K8S_POD_NAME: "temp"
+K8S_POD_NAMESPACE: "temp"
+K8S_NODE_NAME: "temp"
+
+sentry_environment: "development"
+number_of_candidate_images: 1
+
+stream_token: "x-token-9f8a7c2bfa4e49bd83c6aef78b29c1d3"
+clerk_secret_key: ""
+e2b_sandbox_api_key: ""
+anthropic_api_key: ""
+
+gcp_type: "service_account"
+gcp_project_id: "fynd-fex-non-prod"
+
+# New Relic Configuration
+new_relic_app_name: "dofle"
+new_relic_license_key: ""
+new_relic_monitor_mode: false
+new_relic_developer_mode: false
+firecrawl_api_key: ""
+
+
+temporal_host: "localhost:7233"
+temporal_namespace: "trend-agent"
+temporal_max_concurrent_activities: 5
+
+base_cdn_domain: "https://assets.fexz0.de/fex-staging-assets-private"
+
+embedding_model: "text-embedding-ada-002"
+mcp_transport_type: "streamable-http"
+image_file_upload_subpath: "trendforecast"
 openai_api_key: ""
+
+elastic_search_url: "http://elasticsearch-master.utility.svc.cluster.local:9200"
+wgsn_edited_index_name : "wgsn-ingestion-data"
+fashion_general_index : "general-fashion-data"
+macro_trend_index : "wgsn_macro_trend_data"
+micro_trend_index : "wgsn_micro_trend_data"
+
+serp_api_key: ""
+serp_base_url: "https://serpapi.com/search.json"
+pinterest_token : ""
+
+# Apify Configuration for Pinterest image scraping
+# Get your API token from: https://console.apify.com/account#/integrations
+apify_api_token: ""
+# Actor name in format 'username/actor-name' (will be converted to username~actor-name for API calls)
+# Docs: https://apify.com/epctex/pinterest-scraper
+apify_pinterest_actor_id: "epctex/pinterest-scraper"
+pinterest_images_per_keyword: 5
+pinterest_images_refresh_days: 7
+
+# Naruto Design Generation API
+naruto_api_base_url: "https://api.create.sit.fyndx1.de"
+naruto_webhook_base_url: "http://localhost:8096"
+
+# Ahrefs Configuration
+ahrefs_api_key: ""
+ahrefs_mcp_url: "https://api.ahrefs.com/mcp/mcp"
+
+# Deck Generation
+template_presentation_id: "1QgqUf-Kh0-Lvn9GWxRe_H36ZlWF3fGTl_tXwKP9lT3E"
+shared_drive_id: "0APiX8kPWI52xUk9PVA"
+
+# Credentials JSON
+drive_n_slides_json_key: ""
+

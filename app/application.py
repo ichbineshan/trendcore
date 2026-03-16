@@ -1,11 +1,20 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, APIRouter
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
+
+# from app.middleware import (
+#     validation_exception_handler,
+#     generic_validation_exception_handler,
+#     http_exception_handler,
+#     generic_exception_handler
+# )
 
 from config.settings import loaded_config
-from config.sentry import configure_sentry
-from app.router import api_router
 from utils.load_config import run_on_startup, run_on_exit
 
 
@@ -16,41 +25,67 @@ async def lifespan(app: FastAPI):
     await run_on_exit()
 
 
-def get_app() -> FastAPI:
-    """
-    Get FastAPI application.
 
-    This is the main constructor of the application.
+async def healthz():
+    return JSONResponse(status_code=200, content={"success": True})
 
-    Returns:
-        FastAPI application instance
-    """
-    # Enable sentry integration if configured
-    configure_sentry()
 
-    app = FastAPI(
-        debug=loaded_config.debug,
-        title="Trend Analysis",
-        description="AI-powered trend analysis with single agent chat",
-        version="1.0.0",
-        docs_url="/api-reference",
+def get_app():
+    base_app = FastAPI(
+        debug=False,
+        title="Night Eye API",
+        description="AI-powered brand identity and trend analysis platform",
+        version="2.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
         openapi_url="/openapi.json",
-        lifespan=lifespan,
-        root_path="/",
+        lifespan=lifespan
     )
 
-    # CORS configuration
-    allowed_origins = ["*"] if loaded_config.env == "local" else []
-
-    app.add_middleware(
+    base_app.add_middleware(
         CORSMiddleware,
-        allow_origins=allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=["https://local.create.sit.fyndx1.de:3000"],  # Only allow this origins
+        # allow_origins=[],  # Only allow this origins
+        allow_methods=["*"],  # Allows all methods
+        allow_headers=["*"],  # Allows all headers
     )
 
-    # Include API router
-    app.include_router(api_router)
 
-    return app
+
+    api_router_healthz = APIRouter()
+    api_router_healthz.add_api_route(
+        "/_healthz", methods=["GET"], endpoint=healthz, include_in_schema=False
+    )
+    api_router_healthz.add_api_route(
+        "/_readyz", methods=["GET"], endpoint=healthz, include_in_schema=False
+    )
+
+    base_app.include_router(api_router_healthz)
+
+    if loaded_config.server_type == "night_eye":
+        from brand.routes import router as brand_router
+        from collection.routes import router as collection_router
+        from themes.routes import router as themes_router
+        from styles.routes import router as styles_router
+
+        api_router_v1 = APIRouter(prefix="/v1.0")
+        api_router_v1.include_router(brand_router)
+        api_router_v1.include_router(collection_router)
+        api_router_v1.include_router(themes_router)
+        api_router_v1.include_router(styles_router)
+
+
+        base_app.include_router(api_router_v1)
+
+    if loaded_config.server_type == "webhook":
+        from styles.routes import webhook_router as styles_webhook_router
+
+        api_router_v1 = APIRouter(prefix="/v1.0")
+        api_router_v1.include_router(styles_webhook_router)
+
+        base_app.include_router(api_router_v1)
+        return base_app
+
+
+
+    return base_app

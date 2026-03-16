@@ -1,15 +1,11 @@
 # Core Framework
 fastapi==0.120.3
 uvicorn[standard]==0.35.0
-pydantic==2.11.5
+pydantic>=2.12.3,<3.0.0
 pydantic-settings==2.10.1
 
 # AI & LangChain
-langchain==0.3.25
-langchain-core==0.3.76
-langchain-anthropic==0.3.14
-langchain-openai==0.3.17
-langgraph==0.6.7
+
 
 # Database
 sqlalchemy==2.0.43

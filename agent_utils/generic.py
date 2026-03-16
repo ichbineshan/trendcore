@@ -1,5 +1,5 @@
 """
-ResponseHandler: normalizes tool/stream events (same logic as ai-genetic).
+ResponseHandler: normalizes tool/stream events.
 Handles ToolMessage in on_tool_end and produces JSON event payloads.
 """
 
@@ -10,7 +10,6 @@ from langchain_core.messages import ToolMessage
 
 from config.logging import get_logger
 from .stream_factory import StreamHandlerFactory
-from .tool_responses import specified_tools_response
 
 logger = get_logger(__name__)
 
@@ -19,12 +18,10 @@ class ResponseHandler:
     def __init__(
         self,
         tools: dict = None,
-        agents: dict = None,
         model_name: str = None,
         provider: str = None,
     ):
         self.tools = tools or {}
-        self.agents = agents or {}
         self.stream_handler = StreamHandlerFactory.create_handler(
             model_name=model_name,
             provider=provider,
@@ -57,21 +54,15 @@ class ResponseHandler:
     async def handle_response(self, event: dict, last_tool: str = ""):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            return self.stream_handler.handle_stream_event(event, self.agents)
+            return self.stream_handler.handle_stream_event(event)
 
         if kind == "on_tool_start":
-            self.stream_handler.is_sub_agent_streaming = False
-            is_agent = False
-            if "metadata" in event and "__handoff_destination" in event["metadata"]:
-                registry = self.agents.get(event["metadata"]["__handoff_destination"])
-                is_agent = True
-            else:
-                registry = self.tools.get(event["name"])
-                self.run_id_tool_name_mapping.update({event["run_id"]: event["name"]})
+            registry = self.tools.get(event["name"])
+            self.run_id_tool_name_mapping.update({event["run_id"]: event["name"]})
 
             if registry:
                 response_format = registry.get("response_format", {}).copy()
-                response_format["type"] = "agentUsed" if is_agent else "toolStart"
+                response_format["type"] = "toolStart"
                 params = event.get("data", {}).get("input", {})
                 response_format = self._substitute_dict_values(response_format, params)
                 response_format["run_id"] = event.get("run_id")
@@ -80,7 +71,6 @@ class ResponseHandler:
         if kind == "on_tool_end":
             output = event.get("data", {}).get("output")
             if output is not None and isinstance(output, ToolMessage):
-                self.stream_handler.is_sub_agent_streaming = False
                 tool_name = self.run_id_tool_name_mapping.get(event["run_id"])
                 registry = self.tools.get(tool_name)
                 if registry:
@@ -111,15 +101,5 @@ class ResponseHandler:
                     response_format["message"] = message
                     response_format["detail"] = detail
                     response_format["run_id"] = event.get("run_id")
-                    return json.dumps(response_format)
-                if last_tool in specified_tools_response:
-                    response_format = specified_tools_response[last_tool].get("response_format", {}).copy()
-                    content = None
-                    if output:
-                        if hasattr(output, "artifact") and output.artifact is not None:
-                            content = json.dumps(output.artifact) if isinstance(output.artifact, (dict, list)) else str(output.artifact)
-                        elif hasattr(output, "content"):
-                            content = json.dumps(output.content) if isinstance(output.content, (dict, list)) else str(output.content)
-                    response_format["content"] = content
                     return json.dumps(response_format)
         return None

@@ -76,6 +76,7 @@ class CollectionOverviewData(BaseModel):
     """Complete collection overview data."""
     collection_id: str
     status: str
+    image_url: str | None
     narrative: NarrativeSection
     range_overview: RangeOverview | None
     target_market: TargetMarketSection
@@ -86,4 +87,21 @@ class CollectionOverviewResponse(BaseModel):
     success: bool
     message: str
     data: CollectionOverviewData | None = None
+    error: str | None = None
+
+
+class CollectionSummary(BaseModel):
+    """Summary of a single collection."""
+    collection_id: str
+    collection_name: str | None
+    status: str
+    image_url: str | None
+    created_at: int | None
+
+
+class BrandCollectionsResponse(BaseModel):
+    """Response for listing collections by brand."""
+    success: bool
+    message: str
+    data: list[CollectionSummary] | None = None
     error: str | None = None

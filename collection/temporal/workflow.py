@@ -17,6 +17,7 @@ with workflow.unsafe.imports_passed_through():
         generate_overview_activity,
         update_collection_completed_activity,
         update_collection_failed_activity,
+        start_collection_image_generation_activity,
     )
 
 
@@ -72,6 +73,21 @@ class CollectionGenerationWorkflow:
             )
 
             workflow.logger.info(f"Collection generation completed for collection_id={collection_id}")
+
+            # # Fire-and-forget: Start image generation workflow
+            # # This does not block the collection workflow completion
+            # try:
+            #     await workflow.execute_activity(
+            #         start_collection_image_generation_activity,
+            #         arg=state,
+            #         task_queue=TemporalQueue.COLLECTION_GENERATION.value,
+            #         start_to_close_timeout=timedelta(minutes=2),
+            #         retry_policy=retry_policy,
+            #     )
+            #     workflow.logger.info(f"Started image generation for collection_id={collection_id}")
+            # except Exception as img_err:
+            #     # Log but don't fail - image generation is optional
+            #     workflow.logger.warning(f"Failed to start image generation: {img_err}")
 
         except Exception as e:
             workflow.logger.exception(f"Collection generation failed for collection_id={collection_id}: {e}")

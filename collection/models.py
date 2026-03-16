@@ -1,7 +1,8 @@
 import uuid6
-from sqlalchemy import Column, String, Text, Index, ForeignKey
+from sqlalchemy import Column, String, Text, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
+
 from utils.sqlalchemy import Base, EpochTimestampMixin
 
 
@@ -24,15 +25,13 @@ class Collection(Base, EpochTimestampMixin):
     __tablename__ = "collections"
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, default=uuid6.uuid7)
-    brand_id = Column(UUID(as_uuid=True), ForeignKey("brand.id", ondelete="CASCADE"), nullable=False)
+    brand_id = Column(UUID(as_uuid=True), nullable=False)
     collection_name = Column(String, nullable=True)
     status = Column(String, nullable=False, default="pending")
     user_req = Column(JSONB, nullable=True)
     overview = Column(Text, nullable=True)
     range_overview = Column(JSONB, nullable=True)
-
-    # Relationship to brand
-    brand = relationship("Brand", back_populates="collections")
+    image_url = Column(String, nullable=True)
 
     # Relationship to themes
     themes = relationship("Theme", back_populates="collection", cascade="all, delete-orphan")

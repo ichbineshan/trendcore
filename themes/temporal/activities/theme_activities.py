@@ -23,6 +23,12 @@ from themes.schemas import (
     ThemeGenerationOutput,
     ThemesGenerationOutput,
     ThemeBriefsOutput,
+    ColorDirection,
+    TrendNarrative,
+    MicroTrends,
+    MaterialAndSilhouetteDirection,
+    UISuggestions,
+    ColorPalette,
 )
 from utils.token_tracking import track_litellm_usage
 
@@ -54,6 +60,58 @@ MCP_TREND_ANALYSIS_TOOL = [{
     ],
     "require_approval": "never"
 }]
+
+# Phase 1 Research MCP Tools
+MCP_MACRO_MICRO_TREND_TOOL = [{
+    "type": "mcp",
+    "server_label": "macro_micro_trend_server",
+    "server_url": "https://api.fexz0.de/service/nighteye/mcp",
+    "allowed_tools": ["macro_micro_trend"],
+    "require_approval": "never"
+}]
+
+MCP_WGSN_TOOL = [{
+    "type": "mcp",
+    "server_label": "Night_Eye_Trend_Analysis",
+    "server_url": "https://api.fexz0.de/service/nighteye/mcp",
+    "allowed_tools": ["wgsn_edited_trend_search"],
+    "require_approval": "never"
+}]
+
+MCP_GOOGLE_TRENDS_TOOL = [{
+    "type": "mcp",
+    "server_label": "google_trends",
+    "server_url": "https://api.fexz0.de/service/nighteye/mcp",
+    "allowed_tools": ["get_related_trending_queries"],
+    "require_approval": "never"
+}]
+
+
+# =============================================================================
+# Phase 1 Research Output Schemas
+# =============================================================================
+
+class MacroTrendsOutput(BaseModel):
+    """Output from macro/micro cultural trends research."""
+    macro_trends: list[str] = Field(default_factory=list, description="Broad cultural/societal trends")
+    micro_trends: list[str] = Field(default_factory=list, description="Niche/emerging trends")
+    cultural_context: str = Field(default="", description="Cultural context summary")
+
+
+class WGSNTrendsOutput(BaseModel):
+    """Output from WGSN design direction research."""
+    design_directions: list[str] = Field(default_factory=list, description="Key design directions")
+    color_stories: list[str] = Field(default_factory=list, description="Color story themes")
+    silhouettes: list[str] = Field(default_factory=list, description="Key silhouette trends")
+    mood_references: list[str] = Field(default_factory=list, description="Mood/aesthetic references")
+    raw_references: list[str] = Field(default_factory=list, description="Raw source references")
+
+
+class ConsumerTrendsOutput(BaseModel):
+    """Output from consumer/Google Trends research."""
+    trending_queries: list[str] = Field(default_factory=list, description="Trending search queries")
+    rising_terms: list[str] = Field(default_factory=list, description="Rising search terms")
+    related_topics: list[str] = Field(default_factory=list, description="Related topic areas")
 
 
 # =============================================================================
@@ -126,6 +184,80 @@ OUTPUT SECTIONS:
 THEME ALIGNMENT RULES:
 - Themes with high brandDna weight (>50%) should be is_aligned_to_brand_dna = true
 - Themes with low brandDna weight (<40%) can be is_aligned_to_brand_dna = false (experimental)
+"""
+
+# =============================================================================
+# Phase 1 Research Prompts
+# =============================================================================
+
+MACRO_TRENDS_PROMPT = """
+You are a Cultural Trends Researcher identifying macro and micro trends for fashion collection planning.
+
+YOUR TASK:
+Use the `macro_micro_trend` MCP tool to research cultural and societal trends relevant to the brand and target market.
+
+RESEARCH FOCUS:
+1. Macro Trends: Broad cultural/societal shifts (sustainability, digital lifestyle, wellness, etc.)
+2. Micro Trends: Emerging niche trends relevant to fashion (specific aesthetics, subcultures, etc.)
+3. Cultural Context: How these trends connect to the target region and demographic
+
+OUTPUT REQUIREMENTS:
+- Extract 5-8 macro trends with brief descriptions
+- Extract 5-8 micro trends with brief descriptions
+- Provide a 2-3 sentence cultural context summary
+
+Be specific and actionable. Focus on trends that can inform fashion design decisions.
+"""
+
+WGSN_TRENDS_PROMPT = """
+You are a Fashion Trend Analyst researching WGSN design directions for collection planning.
+
+YOUR TASK:
+Use the `wgsn_edited_trend_search` MCP tool to research design trends relevant to the brand, season, and categories.
+
+RESEARCH FOCUS:
+1. Design Directions: Key aesthetic and design movements
+2. Color Stories: Emerging color themes and palettes
+3. Silhouettes: Key shape and proportion trends
+4. Mood References: Aesthetic and emotional references
+
+SEARCH STRATEGY:
+- Search for the target season and year
+- Search for relevant categories (menswear, womenswear, etc.)
+- Search for brand-relevant aesthetic terms
+
+OUTPUT REQUIREMENTS:
+- Extract 5-8 design directions
+- Extract 4-6 color story themes
+- Extract 4-6 silhouette trends
+- Extract 4-6 mood references
+- Include raw references/sources for traceability
+
+Be specific about WGSN insights. These will inform theme generation.
+"""
+
+CONSUMER_TRENDS_PROMPT = """
+You are a Consumer Insights Researcher validating fashion trends with search data.
+
+YOUR TASK:
+Use the `get_related_trending_queries` MCP tool to research what consumers are actively searching for.
+
+RESEARCH FOCUS:
+1. Trending Queries: What fashion-related terms are trending
+2. Rising Terms: What terms are gaining momentum
+3. Related Topics: What broader topics connect to fashion trends
+
+SEARCH STRATEGY:
+- Search for fashion-related terms from the macro/micro trends
+- Search for brand-relevant style terms
+- Search for seasonal and category-specific queries
+
+OUTPUT REQUIREMENTS:
+- Extract 5-10 trending queries related to fashion
+- Extract 5-10 rising terms showing momentum
+- Extract 5-8 related topic areas
+
+Focus on consumer-validated trends that confirm or add to the research.
 """
 
 # Legacy prompt for reference/fallback
@@ -201,124 +333,8 @@ THEME ALIGNMENT RULES:
 
 
 # =============================================================================
-# Activities
+# Status Update Activities
 # =============================================================================
-
-@activity.defn
-async def generate_themes_activity(state: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Generate themes using LiteLLM with MCP tools.
-
-    Input state:
-        - collection_id: UUID of the collection
-        - user_req: User request payload with themes requirements
-        - brand_dna: Brand DNA data (fetched from brand service)
-        - theme_ids: List of placeholder theme IDs
-
-    Output state:
-        - themes_data: Generated themes data
-    """
-    os.environ.setdefault("OPENAI_API_KEY", loaded_config.openai_gpt4_key)
-
-    collection_id = state["collection_id"]
-    user_req = state["user_req"]
-    brand_dna = state.get("brand_dna", {})
-    theme_requirements = user_req.get("themes", [])
-    theme_ids = state.get("theme_ids", [])
-
-    activity.logger.info(f"Starting theme generation for collection_id={collection_id}")
-
-    # Build generation prompt
-    num_themes = len(theme_requirements)
-
-    theme_guidance = "\n".join([
-        f"Theme {i+1} Requirements:\n"
-        f"  - Focus/Prompt: {theme.get('prompt', 'General theme exploration')}\n"
-        f"  - Brand DNA Weight: {theme.get('brandDna', 40)}% (How much to align with brand identity)\n"
-        f"  - WGSN Trends Weight: {theme.get('wgsn', 40)}% (How much to consider WGSN trend reports)\n"
-        f"  - Competitor Weight: {theme.get('competitor', 20)}% (How much to consider competitor analysis)\n"
-        for i, theme in enumerate(theme_requirements)
-    ])
-
-    # Build season title
-    season = user_req.get("season", "").replace("-", " ").title()
-    target_year = user_req.get("target_year", "")
-    season_title = f"{season} {target_year}".strip()
-
-    generation_prompt = f"""
-Brand Information:
-- Brand Name: {user_req.get('brand_name', 'Unknown')}
-- Brand Type: {user_req.get('brand_type', 'regular')}
-- Brand Website: {user_req.get('brand_website', '')}
-
-Target Market:
-- Season: {season_title}
-- Country: {user_req.get('country', '')}
-- Region: {user_req.get('region', '')}
-
-Categories:
-{json.dumps(user_req.get('categories', []), indent=2)}
-
-Competitors:
-{json.dumps(user_req.get('competitors', []), indent=2)}
-
-Brand DNA:
-{json.dumps(brand_dna, indent=2) if brand_dna else "Not available"}
-
-Number of Themes to Generate: {num_themes}
-
-Theme Requirements:
-{theme_guidance}
-
-Generate {num_themes} distinct themes following the requirements above.
-Use the MCP tools to fetch actual Pantone/Coloro codes and trend data.
-"""
-
-    try:
-        response = await litellm.aresponses(
-            model=DEFAULT_MODEL,
-            input=generation_prompt,
-            instructions=THEME_GENERATION_PROMPT_LEGACY,
-            tools=MCP_TREND_ANALYSIS_TOOL,
-            text_format=ThemesGenerationOutput,
-            reasoning=REASONING_HIGH,
-            store=True,
-        )
-
-        if response.error:
-            raise RuntimeError(f"LLM API error: {response.error}")
-
-        result = ThemesGenerationOutput.model_validate_json(response.output_text)
-
-        # Track token usage
-        track_litellm_usage(state, "generate_themes", response, DEFAULT_MODEL)
-
-        # Store each theme
-        for idx, theme_data in enumerate(result.themes):
-            if idx < len(theme_ids):
-                theme_id = UUID(theme_ids[idx]) if isinstance(theme_ids[idx], str) else theme_ids[idx]
-                await ThemeService.update_theme_with_generated_data(
-                    theme_id=theme_id,
-                    generated_data=theme_data,
-                )
-
-        # Update references for all themes
-        if result.references:
-            for theme_id in theme_ids:
-                tid = UUID(theme_id) if isinstance(theme_id, str) else theme_id
-                await ThemeService.update_references(tid, result.references)
-
-        state["themes_data"] = [t.model_dump() for t in result.themes]
-        state["references"] = result.references
-
-        activity.logger.info(f"Theme generation completed for collection_id={collection_id}")
-
-    except Exception as e:
-        activity.logger.error(f"Theme generation failed: {e}")
-        raise
-
-    return state
-
 
 @activity.defn
 async def update_themes_completed_activity(state: Dict[str, Any]) -> None:
@@ -344,71 +360,367 @@ async def update_themes_failed_activity(state: Dict[str, Any]) -> None:
 
 
 # =============================================================================
-# Phase 1 Activity: Generate Theme Briefs
+# Phase 1A Activity: Gather Macro/Micro Cultural Trends
 # =============================================================================
 
 @activity.defn
-async def generate_theme_briefs_activity(state: Dict[str, Any]) -> Dict[str, Any]:
+async def gather_macro_trends_activity(state: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Phase 1: Generate distinct theme briefs.
-
-    Single LLM call to create N distinct briefs with explicit differentiation.
-    No MCP calls here - save those for Phase 2.
+    Phase 1A: Gather macro/micro cultural trends using macro_micro_trend MCP tool.
 
     Input state:
         - collection_id: UUID of the collection
-        - user_req: User request payload with themes requirements
+        - user_req: User request payload with theme_count
         - brand_dna: Brand DNA data
-        - theme_ids: List of placeholder theme IDs
 
-    Output state:
-        - briefs: List of ThemeBrief data (one per theme)
+    Output state (mutated):
+        - macro_trends_data: MacroTrendsOutput data
     """
     os.environ.setdefault("OPENAI_API_KEY", loaded_config.openai_gpt4_key)
 
     collection_id = state["collection_id"]
     user_req = state["user_req"]
     brand_dna = state.get("brand_dna", {})
-    theme_requirements = user_req.get("themes", [])
-    theme_ids = state.get("theme_ids", [])
+
+    activity.logger.info(f"Phase 1A: Gathering macro/micro trends for collection_id={collection_id}")
+
+    # Build season info
+    season = user_req.get("season", "").replace("-", " ").title()
+    target_year = user_req.get("target_year", "")
+    season_title = f"{season} {target_year}".strip()
+
+    research_prompt = f"""
+Research macro and micro cultural trends for:
+
+Brand: {user_req.get('brand_name', 'Unknown')}
+Season: {season_title}
+Region: {user_req.get('region', '')}
+Country: {user_req.get('country', '')}
+Target Age: {user_req.get('target_age', '')}
+Target Gender: {user_req.get('target_gender', '')}
+
+Categories:
+{json.dumps(user_req.get('categories', []), indent=2)}
+
+Brand Special Requests:
+{user_req.get('brand_special_requests', 'None')}
+
+Use the macro_micro_trend tool to research relevant cultural and societal trends.
+"""
+
+    try:
+        response = await litellm.aresponses(
+            model=DEFAULT_MODEL,
+            input=research_prompt,
+            instructions=MACRO_TRENDS_PROMPT,
+            tools=MCP_MACRO_MICRO_TREND_TOOL,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "MacroTrendsOutput",
+                    "strict": False,
+                    "schema": MacroTrendsOutput.model_json_schema()
+                }
+            },
+            reasoning=REASONING_LOW,
+            store=True,
+        )
+
+        if response.error:
+            activity.logger.warning(f"Macro trends MCP error: {response.error}")
+            # Continue with empty data
+            state["macro_trends_data"] = MacroTrendsOutput().model_dump()
+        else:
+            result = MacroTrendsOutput.model_validate_json(response.output_text)
+            track_litellm_usage(state, "gather_macro_trends", response, DEFAULT_MODEL)
+            state["macro_trends_data"] = result.model_dump()
+            activity.logger.info(
+                f"Phase 1A completed: {len(result.macro_trends)} macro, "
+                f"{len(result.micro_trends)} micro trends"
+            )
+
+    except Exception as e:
+        activity.logger.warning(f"Phase 1A failed (continuing with empty data): {e}")
+        state["macro_trends_data"] = MacroTrendsOutput().model_dump()
+
+    return state
+
+
+# =============================================================================
+# Phase 1B Activity: Gather WGSN Design Trends
+# =============================================================================
+
+@activity.defn
+async def gather_wgsn_trends_activity(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Phase 1B: Gather WGSN design directions using wgsn_edited_trend_search MCP tool.
+
+    Input state:
+        - collection_id: UUID of the collection
+        - user_req: User request payload
+        - brand_dna: Brand DNA data
+        - macro_trends_data: From Phase 1A (optional)
+
+    Output state (mutated):
+        - wgsn_trends_data: WGSNTrendsOutput data
+    """
+    os.environ.setdefault("OPENAI_API_KEY", loaded_config.openai_gpt4_key)
+
+    collection_id = state["collection_id"]
+    user_req = state["user_req"]
+    brand_dna = state.get("brand_dna", {})
+    macro_trends = state.get("macro_trends_data", {})
+
+    activity.logger.info(f"Phase 1B: Gathering WGSN trends for collection_id={collection_id}")
+
+    # Build season info
+    season = user_req.get("season", "").replace("-", " ").title()
+    target_year = user_req.get("target_year", "")
+    season_title = f"{season} {target_year}".strip()
+
+    # Include macro trends for context if available
+    macro_context = ""
+    if macro_trends.get("macro_trends"):
+        macro_context = f"\nRelevant macro trends to consider:\n{', '.join(macro_trends.get('macro_trends', []))}"
+
+    research_prompt = f"""
+Research WGSN design directions for:
+
+Brand: {user_req.get('brand_name', 'Unknown')}
+Season: {season_title}
+Region: {user_req.get('region', '')}
+Country: {user_req.get('country', '')}
+
+Categories:
+{json.dumps(user_req.get('categories', []), indent=2)}
+
+Brand Aesthetic (from DNA):
+{json.dumps(brand_dna.get('core_values_and_voice', {}), indent=2) if brand_dna else "Not available"}
+{macro_context}
+
+Use the wgsn_edited_trend_search tool to research design directions, color stories, and silhouette trends.
+"""
+
+    try:
+        response = await litellm.aresponses(
+            model=DEFAULT_MODEL,
+            input=research_prompt,
+            instructions=WGSN_TRENDS_PROMPT,
+            tools=MCP_WGSN_TOOL,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "WGSNTrendsOutput",
+                    "strict": False,
+                    "schema": WGSNTrendsOutput.model_json_schema()
+                }
+            },
+            reasoning=REASONING_LOW,
+            store=True,
+        )
+
+        if response.error:
+            activity.logger.warning(f"WGSN trends MCP error: {response.error}")
+            state["wgsn_trends_data"] = WGSNTrendsOutput().model_dump()
+        else:
+            result = WGSNTrendsOutput.model_validate_json(response.output_text)
+            track_litellm_usage(state, "gather_wgsn_trends", response, DEFAULT_MODEL)
+            state["wgsn_trends_data"] = result.model_dump()
+            activity.logger.info(
+                f"Phase 1B completed: {len(result.design_directions)} directions, "
+                f"{len(result.color_stories)} color stories"
+            )
+
+    except Exception as e:
+        activity.logger.warning(f"Phase 1B failed (continuing with empty data): {e}")
+        state["wgsn_trends_data"] = WGSNTrendsOutput().model_dump()
+
+    return state
+
+
+# =============================================================================
+# Phase 1C Activity: Gather Consumer/Google Trends
+# =============================================================================
+
+@activity.defn
+async def gather_consumer_trends_activity(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Phase 1C: Validate trends with get_related_trending_queries MCP tool.
+
+    Input state:
+        - collection_id: UUID of the collection
+        - user_req: User request payload
+        - brand_dna: Brand DNA data
+        - macro_trends_data: From Phase 1A (optional)
+        - wgsn_trends_data: From Phase 1B (optional)
+
+    Output state (mutated):
+        - consumer_trends_data: ConsumerTrendsOutput data
+    """
+    os.environ.setdefault("OPENAI_API_KEY", loaded_config.openai_gpt4_key)
+
+    collection_id = state["collection_id"]
+    user_req = state["user_req"]
+    macro_trends = state.get("macro_trends_data", {})
+    wgsn_trends = state.get("wgsn_trends_data", {})
+
+    activity.logger.info(f"Phase 1C: Gathering consumer trends for collection_id={collection_id}")
+
+    # Build context from previous activities
+    search_context = []
+    if macro_trends.get("micro_trends"):
+        search_context.extend(macro_trends.get("micro_trends", [])[:3])
+    if wgsn_trends.get("design_directions"):
+        search_context.extend(wgsn_trends.get("design_directions", [])[:3])
+
+    research_prompt = f"""
+Research consumer search trends for:
+
+Brand: {user_req.get('brand_name', 'Unknown')}
+Region: {user_req.get('region', '')}
+Country: {user_req.get('country', '')}
+
+Categories:
+{json.dumps(user_req.get('categories', []), indent=2)}
+
+Trend terms to validate (from prior research):
+{', '.join(search_context) if search_context else 'General fashion trends'}
+
+Use the get_related_trending_queries tool to find what consumers are searching for.
+"""
+
+    try:
+        response = await litellm.aresponses(
+            model=DEFAULT_MODEL,
+            input=research_prompt,
+            instructions=CONSUMER_TRENDS_PROMPT,
+            tools=MCP_GOOGLE_TRENDS_TOOL,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "ConsumerTrendsOutput",
+                    "strict": False,
+                    "schema": ConsumerTrendsOutput.model_json_schema()
+                }
+            },
+            reasoning=REASONING_LOW,
+            store=True,
+        )
+
+        if response.error:
+            activity.logger.warning(f"Consumer trends MCP error: {response.error}")
+            state["consumer_trends_data"] = ConsumerTrendsOutput().model_dump()
+        else:
+            result = ConsumerTrendsOutput.model_validate_json(response.output_text)
+            track_litellm_usage(state, "gather_consumer_trends", response, DEFAULT_MODEL)
+            state["consumer_trends_data"] = result.model_dump()
+            activity.logger.info(
+                f"Phase 1C completed: {len(result.trending_queries)} queries, "
+                f"{len(result.rising_terms)} rising terms"
+            )
+
+    except Exception as e:
+        activity.logger.warning(f"Phase 1C failed (continuing with empty data): {e}")
+        state["consumer_trends_data"] = ConsumerTrendsOutput().model_dump()
+
+    return state
+
+
+# =============================================================================
+# Phase 1D Activity: Generate Theme Briefs + Create DB Rows
+# =============================================================================
+
+@activity.defn
+async def generate_theme_briefs_activity(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Phase 1D: Generate distinct theme briefs and create DB rows.
+
+    Uses research data from prior activities to generate theme briefs.
+    Creates theme DB rows after generating briefs.
+
+    Input state:
+        - collection_id: UUID of the collection
+        - user_req: User request payload with theme_count
+        - brand_dna: Brand DNA data
+        - macro_trends_data: From Phase 1A (optional)
+        - wgsn_trends_data: From Phase 1B (optional)
+        - consumer_trends_data: From Phase 1C (optional)
+
+    Output state:
+        - briefs: List of ThemeBrief data with theme_ids
+        - theme_ids: List of created theme IDs
+    """
+    os.environ.setdefault("OPENAI_API_KEY", loaded_config.openai_gpt4_key)
+
+    collection_id = state["collection_id"]
+    user_req = state["user_req"]
+    brand_dna = state.get("brand_dna", {})
+
+    # Get research data from prior activities
+    macro_trends = state.get("macro_trends_data", {})
+    wgsn_trends = state.get("wgsn_trends_data", {})
+    consumer_trends = state.get("consumer_trends_data", {})
+
+    # Get theme_count from user_req (new approach - no detailed theme requirements)
+    num_themes = user_req.get("theme_count", 3)
 
     activity.logger.info(
-        f"Phase 1: Generating theme briefs for collection_id={collection_id}, "
-        f"num_themes={len(theme_requirements)}"
+        f"Phase 1D: Generating {num_themes} theme briefs for collection_id={collection_id}"
     )
-
-    num_themes = len(theme_requirements)
-
-    # Build theme requirements guidance
-    theme_guidance = "\n".join([
-        f"Theme {i+1}:\n"
-        f"  - User Prompt: {theme.get('prompt', 'General theme exploration')}\n"
-        f"  - Brand DNA Weight: {theme.get('brandDna', 40)}%\n"
-        f"  - WGSN Trends Weight: {theme.get('wgsn', 40)}%\n"
-        f"  - Competitor Weight: {theme.get('competitor', 20)}%\n"
-        for i, theme in enumerate(theme_requirements)
-    ])
 
     # Build season title
     season = user_req.get("season", "").replace("-", " ").title()
     target_year = user_req.get("target_year", "")
     season_title = f"{season} {target_year}".strip()
 
+    # Build research context from prior activities
+    research_context = ""
+    if macro_trends.get("macro_trends") or macro_trends.get("micro_trends"):
+        research_context += f"""
+MACRO/MICRO TRENDS (from cultural research):
+- Macro Trends: {', '.join(macro_trends.get('macro_trends', []))}
+- Micro Trends: {', '.join(macro_trends.get('micro_trends', []))}
+- Cultural Context: {macro_trends.get('cultural_context', 'N/A')}
+"""
+
+    if wgsn_trends.get("design_directions") or wgsn_trends.get("color_stories"):
+        research_context += f"""
+WGSN DESIGN DIRECTIONS (from industry research):
+- Design Directions: {', '.join(wgsn_trends.get('design_directions', []))}
+- Color Stories: {', '.join(wgsn_trends.get('color_stories', []))}
+- Silhouettes: {', '.join(wgsn_trends.get('silhouettes', []))}
+- Mood References: {', '.join(wgsn_trends.get('mood_references', []))}
+"""
+
+    if consumer_trends.get("trending_queries") or consumer_trends.get("rising_terms"):
+        research_context += f"""
+CONSUMER TRENDS (from search data):
+- Trending Queries: {', '.join(consumer_trends.get('trending_queries', []))}
+- Rising Terms: {', '.join(consumer_trends.get('rising_terms', []))}
+- Related Topics: {', '.join(consumer_trends.get('related_topics', []))}
+"""
+
     generation_prompt = f"""
 Brand: {user_req.get('brand_name', 'Unknown')}
 Season: {season_title}
 Country: {user_req.get('country', '')}
 Region: {user_req.get('region', '')}
+Target Age: {user_req.get('target_age', '')}
+Target Gender: {user_req.get('target_gender', '')}
+
+Categories:
+{json.dumps(user_req.get('categories', []), indent=2)}
 
 Brand DNA Summary:
 {json.dumps(brand_dna.get('core_values_and_voice', {}), indent=2) if brand_dna else "Not available"}
 
+Brand Special Requests:
+{user_req.get('brand_special_requests', 'None')}
+{research_context}
 Number of Themes to Generate: {num_themes}
 
-Theme Requirements from User:
-{theme_guidance}
-
-Generate {num_themes} DISTINCT theme briefs. Each brief must be clearly different from the others.
+Using the research data above, generate {num_themes} DISTINCT theme briefs.
+Each theme must be clearly different from the others and leverage the trend research.
 Explain in distinctiveness_rationale how each theme differs.
 """
 
@@ -417,7 +729,14 @@ Explain in distinctiveness_rationale how each theme differs.
             model=DEFAULT_MODEL,
             input=generation_prompt,
             instructions=THEME_BRIEFS_PROMPT,
-            text_format=ThemeBriefsOutput,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "ThemeBriefsOutput",
+                    "strict": False,
+                    "schema": ThemeBriefsOutput.model_json_schema()
+                }
+            },
             reasoning=REASONING_MEDIUM,
             store=True,
         )
@@ -430,25 +749,37 @@ Explain in distinctiveness_rationale how each theme differs.
         # Track token usage
         track_litellm_usage(state, "generate_theme_briefs", response, DEFAULT_MODEL)
 
-        # Map briefs to theme_ids
+        # Create DB rows for each brief and collect theme_ids
         briefs_with_ids = []
-        for idx, brief in enumerate(result.briefs):
-            if idx < len(theme_ids):
-                briefs_with_ids.append({
-                    "theme_id": theme_ids[idx],
-                    "brief": brief.model_dump(),
-                })
+        theme_ids = []
+        collection_uuid = UUID(collection_id) if isinstance(collection_id, str) else collection_id
+
+        for brief in result.briefs:
+            # Create theme row in database
+            theme_id = await ThemeService.create_theme(
+                collection_id=collection_uuid,
+                theme_name=brief.theme_name,
+                theme_slug=brief.theme_slug,
+                generation_input={"brief": brief.model_dump()},
+            )
+
+            theme_ids.append(str(theme_id))
+            briefs_with_ids.append({
+                "theme_id": str(theme_id),
+                "brief": brief.model_dump(),
+            })
 
         state["briefs"] = briefs_with_ids
+        state["theme_ids"] = theme_ids
         state["distinctiveness_rationale"] = result.distinctiveness_rationale
 
         activity.logger.info(
-            f"Phase 1 completed: Generated {len(briefs_with_ids)} distinct briefs "
-            f"for collection_id={collection_id}"
+            f"Phase 1D completed: Generated {len(briefs_with_ids)} briefs, "
+            f"created {len(theme_ids)} theme rows for collection_id={collection_id}"
         )
 
     except Exception as e:
-        activity.logger.error(f"Phase 1 failed: {e}")
+        activity.logger.error(f"Phase 1D failed: {e}")
         raise
 
     return state
@@ -532,7 +863,14 @@ Stay true to the brief's core concept and key differentiator.
             input=generation_prompt,
             instructions=SINGLE_THEME_GENERATION_PROMPT,
             tools=MCP_TREND_ANALYSIS_TOOL,
-            text_format=ThemeGenerationOutput,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "ThemeGenerationOutput",
+                    "strict": False,
+                    "schema": ThemeGenerationOutput.model_json_schema()
+                }
+            },
             reasoning=REASONING_HIGH,
             store=True,
         )

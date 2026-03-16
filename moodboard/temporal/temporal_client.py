@@ -8,8 +8,8 @@ import uuid
 from datetime import timedelta
 from typing import Any
 
-from collection_dna.moodboard.temporal.constants import TemporalQueue
-from collection_dna.moodboard.temporal.workflow import MoodboardGenerationWorkflow
+from moodboard.temporal.constants import TemporalQueue
+from moodboard.temporal.workflow import MoodboardGenerationWorkflow
 from utils.temporal.temporal_client import TemporalClient
 
 

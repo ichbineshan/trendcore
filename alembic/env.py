@@ -16,6 +16,8 @@ import collection.models
 import themes.models
 import trend.models
 import moodboard.models
+import styles.models
+
 
 # this is the Alembic Config object
 config = context.config

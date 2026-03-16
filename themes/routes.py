@@ -27,3 +27,13 @@ router.add_api_route(
     summary="Get theme details",
     description="Get complete theme details including color direction, materials, micro trends, and UI suggestions.",
 )
+
+
+# Update theme review status
+# router.add_api_route(
+#     path="/themes/{theme_id}/review",
+#     endpoint=update_theme_review,
+#     methods=["POST"],
+#     summary="Update theme review status",
+#     description="Set theme review status to 'approved' or 'rejected' with optional notes.",
+# )

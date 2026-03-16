@@ -6,8 +6,8 @@ Business logic for moodboard operations.
 
 from uuid import UUID
 
-from collection_dna.moodboard.dao import ThemeMoodboardDAO
-from collection_dna.moodboard.models import ThemeMoodboard
+from moodboard.dao import ThemeMoodboardDAO
+from moodboard.models import ThemeMoodboard
 from config.logging import logger
 from utils.connection_handler import get_connection_handler_for_app
 

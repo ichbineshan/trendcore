@@ -13,6 +13,8 @@ from themes.schemas import (
     ThemeTilesResponse,
     ThemeFullDetailData,
     ThemeDetailResponse,
+    ThemeReviewRequest,
+    ThemeReviewResponse,
 )
 from themes.service import ThemeService
 
@@ -47,7 +49,7 @@ async def get_theme_tiles(collection_id: str) -> dict[str, Any]:
                 one_line_summary=theme.one_line_summary,
                 mood_tags=theme.mood_tags,
                 aesthetic_labels=theme.aesthetic_labels,
-                moodboard_image_url=theme.moodboard_image_url,
+                #moodboard_image_url=theme.moodboard_image_url,
             )
             for theme in themes
         ]
@@ -82,6 +84,7 @@ async def get_theme_detail(theme_id: str) -> dict[str, Any]:
     """
     try:
         theme = await ThemeService.get_theme_by_id(UUID(theme_id))
+
 
         if not theme:
             return ThemeDetailResponse(
@@ -139,10 +142,12 @@ async def get_theme_detail(theme_id: str) -> dict[str, Any]:
             trim_suggestions=theme.trim_suggestions,
             artwork_suggestions=theme.artwork_suggestions,
             # Moodboard
-            moodboard_description=theme.moodboard_description,
-            moodboard_image_url=theme.moodboard_image_url,
+
             # Status
             status=theme.status,
+            # Review Status
+            review_status=theme.review_status,
+            review_notes=theme.review_notes,
         )
 
         return ThemeDetailResponse(
@@ -158,3 +163,42 @@ async def get_theme_detail(theme_id: str) -> dict[str, Any]:
             message="Failed to get theme detail",
             error=str(e),
         ).model_dump()
+
+
+async def update_theme_review(theme_id: str, request: ThemeReviewRequest) -> dict[str, Any]:
+        """
+        Update theme review status.
+
+        Sets review_status to 'approved' or 'rejected' with optional notes.
+        """
+        try:
+            theme = await ThemeService.update_review(
+                theme_id=UUID(theme_id),
+                review_status=request.review_status.value,
+                review_notes=request.review_notes,
+            )
+
+            if not theme:
+                return ThemeReviewResponse(
+                    success=False,
+                    message="Theme not found",
+                    error=f"No theme found with id: {theme_id}",
+                ).model_dump()
+
+            return ThemeReviewResponse(
+                success=True,
+                message=f"Theme review status updated to '{request.review_status.value}'",
+                data={
+                    "id": str(theme.id),
+                    "review_status": theme.review_status,
+                    "review_notes": theme.review_notes,
+                },
+            ).model_dump()
+
+        except Exception as e:
+            logger.exception(f"Failed to update theme review: {e}")
+            return ThemeReviewResponse(
+                success=False,
+                message="Failed to update theme review",
+                error=str(e),
+            ).model_dump()

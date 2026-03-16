@@ -14,6 +14,7 @@ from temporalio import activity
 
 from config.settings import loaded_config
 from collection.service import CollectionService
+from image_generation.temporal import ImageGenerationTemporalClient
 from utils.token_tracking import track_litellm_usage
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ Given the collection details below, generate:
      - category: The segment name (e.g., "Womenswear", "Menswear")
      - brick: The specific product type (e.g., "Kurtas & Kurtis", "Co-ord Sets")
      - style_fit: Recommended silhouettes and fits (e.g., "Straight Cut · A-Line · High-Low")
-     - num_styles: Estimated number of styles for this brick
+     - num_styles: 0
      - price_range: Format as "₹{{startPrice}}-₹{{endPrice}}"
 
 Use the categories, themes, season, target year, and brand information from the input to inform your response.
@@ -163,3 +164,37 @@ async def update_collection_failed_activity(state: Dict[str, Any]) -> None:
     )
 
     activity.logger.info(f"Collection updated to failed: {collection_id}")
+
+
+@activity.defn
+async def start_collection_image_generation_activity(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Start collection image generation workflow (fire-and-forget).
+
+    This activity starts the image generation workflow asynchronously.
+    The collection workflow does not wait for image generation to complete.
+    """
+    collection_id = state.get("collection_id")
+
+    try:
+        client = ImageGenerationTemporalClient()
+        await client.connect()
+
+        workflow_id = await client.start_collection_image_workflow(
+            collection_id=collection_id,
+        )
+
+        activity.logger.info(
+            f"Started collection image generation workflow: {workflow_id} "
+            f"for collection_id={collection_id}"
+        )
+
+        state["image_workflow_id"] = workflow_id
+        return state
+
+    except Exception as e:
+        # Log error but don't fail - this is fire-and-forget
+        activity.logger.warning(
+            f"Failed to start image generation workflow for collection_id={collection_id}: {e}"
+        )
+        return state

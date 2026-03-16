@@ -21,9 +21,13 @@ class ThemeTemporalClient(TemporalClient):
         collection_id: str,
         user_req: dict[str, Any],
         brand_dna: dict[str, Any],
-        theme_ids: list[str],
     ) -> str:
-        """Start theme generation workflow."""
+        """
+        Start theme generation workflow.
+
+        Theme rows are created dynamically during the workflow (Phase 1D)
+        based on theme_count in user_req.
+        """
         workflow_id = await self.start_workflow(
             workflow_class=ThemeGenerationWorkflow,
             workflow_method=ThemeGenerationWorkflow.run,
@@ -31,9 +35,8 @@ class ThemeTemporalClient(TemporalClient):
                 "collection_id": collection_id,
                 "user_req": user_req,
                 "brand_dna": brand_dna,
-                "theme_ids": theme_ids,
             }],
-            workflow_id=f"theme-generation-{collection_id}-{uuid.uuid4()}",
+            workflow_id=f"theme-generation-{collection_id}",
             task_queue=TemporalQueue.THEME_GENERATION.value,
             execution_timeout=timedelta(hours=1),
         )

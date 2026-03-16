@@ -27,6 +27,7 @@ class CollectionDAO(BaseDAO):
             brand_id=brand_id,
             status=status,
             user_req=user_req,
+
         )
         self.session.add(collection)
         return collection
@@ -69,3 +70,18 @@ class CollectionDAO(BaseDAO):
                 .values(**update_values)
             )
             await self._execute_query(query)
+
+    async def select_by_brand_id(self, brand_id: UUID) -> list[Collection]:
+        """Select all collections for a brand."""
+        query = select(Collection).where(Collection.brand_id == brand_id)
+        result = await self._execute_query(query)
+        return result.scalars().all()
+
+    async def update_image_url(self, collection_id: UUID, image_url: str) -> None:
+        """Update collection image URL."""
+        query = (
+            update(Collection)
+            .where(Collection.id == collection_id)
+            .values(image_url=image_url)
+        )
+        await self._execute_query(query)

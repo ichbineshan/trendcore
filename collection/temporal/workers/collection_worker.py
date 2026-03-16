@@ -2,6 +2,7 @@
 Collection Generation Temporal Worker.
 """
 
+import asyncio
 import logging
 import sys
 
@@ -14,6 +15,7 @@ from collection.temporal.activities import (
     generate_overview_activity,
     update_collection_completed_activity,
     update_collection_failed_activity,
+    start_collection_image_generation_activity,
 )
 from config.settings import loaded_config
 from utils.temporal.worker_registry import register_worker
@@ -39,6 +41,7 @@ async def generate_collection_worker():
                 generate_overview_activity,
                 update_collection_completed_activity,
                 update_collection_failed_activity,
+                start_collection_image_generation_activity,
             ],
         )
         print("COLLECTION_WORKER: Worker created.", file=sys.stderr, flush=True)

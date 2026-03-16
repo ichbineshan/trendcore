@@ -17,6 +17,8 @@ from temporalio import activity
 from config.logging import logger
 from config.settings import loaded_config
 from utils.token_tracking import track_litellm_usage
+from trend.service import ThemeTrendService
+from trend.service import ThemeTrendService
 
 
 # =============================================================================
@@ -408,7 +410,7 @@ async def create_theme_trend_record_activity(params: dict[str, Any]) -> dict[str
     Returns:
         {"success": True, "theme_trend_id": str}
     """
-    from trend.service import ThemeTrendService
+
 
     theme_id = UUID(params["theme_id"])
 
@@ -679,7 +681,7 @@ async def mark_trend_failed_activity(params: dict[str, Any]) -> dict[str, Any]:
     Returns:
         {"success": True}
     """
-    from trend.service import ThemeTrendService
+
 
     theme_id = UUID(params["theme_id"])
 

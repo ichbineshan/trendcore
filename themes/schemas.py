@@ -8,7 +8,13 @@ and LLM output validation.
 from typing import Any
 
 from pydantic import BaseModel
+from enum import Enum
 
+
+class ReviewStatus(str, Enum):
+    """Review status enum for API."""
+    approved = "approved"
+    rejected = "rejected"
 
 # =============================================================================
 # LLM Output Schemas (for theme generation)
@@ -140,6 +146,19 @@ class ThemeCreateRequest(BaseModel):
     collection_id: str
     theme_requirements: list[dict[str, Any]]
 
+
+class ThemeReviewRequest(BaseModel):
+    """Request to update theme review status."""
+    review_status: ReviewStatus
+    review_notes: str | None = None
+
+
+class ThemeReviewResponse(BaseModel):
+    """Response for theme review update."""
+    success: bool
+    message: str
+    data: dict | None = None
+    error: str | None = None
 
 # -----------------------------------------------------------------------------
 # Theme Tiles API Response (Lightweight for cards)
@@ -273,11 +292,3 @@ class ThemeResponse(BaseModel):
 
     # Status
     status: str
-
-
-class ThemeListResponse(BaseModel):
-    """Response for listing themes (legacy)."""
-    success: bool
-    message: str
-    data: list[ThemeResponse] | None = None
-    error: str | None = None

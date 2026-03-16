@@ -64,3 +64,18 @@ class CollectionService:
                 range_overview=range_overview,
             )
             await connection_handler.session.commit()
+
+    @staticmethod
+    async def get_collections_by_brand_id(brand_id: UUID) -> list[Collection]:
+        """Get all collections for a brand."""
+        async with get_connection_handler_for_app() as connection_handler:
+            dao = CollectionDAO(connection_handler.session)
+            return await dao.select_by_brand_id(brand_id)
+
+    @staticmethod
+    async def update_collection_image_url(collection_id: UUID, image_url: str) -> None:
+        """Update collection image URL."""
+        async with get_connection_handler_for_app() as connection_handler:
+            dao = CollectionDAO(connection_handler.session)
+            await dao.update_image_url(collection_id, image_url)
+            await connection_handler.session.commit()

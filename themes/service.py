@@ -186,3 +186,26 @@ class ThemeService:
             dao = ThemeDAO(connection_handler.session)
             await dao.update_references(theme_id, references)
             await connection_handler.session.commit()
+
+    @staticmethod
+    async def update_review(
+            theme_id: UUID,
+            review_status: str,
+            review_notes: str | None = None,
+    ) -> Theme | None:
+        """Update theme review status and notes."""
+        async with get_connection_handler_for_app() as connection_handler:
+            dao = ThemeDAO(connection_handler.session)
+
+            # Check if theme exists
+            theme = await dao.select_by_id(theme_id)
+            if not theme:
+                return None
+
+            await dao.update_review_status(theme_id, review_status, review_notes)
+            await connection_handler.session.commit()
+            logger.info(f"Updated review status for theme {theme_id}: {review_status}")
+
+            # Return updated theme
+            return await dao.select_by_id(theme_id)
+

@@ -251,3 +251,22 @@ class ThemeDAO(BaseDAO):
             .values(status=status)
         )
         await self._execute_query(query)
+
+    async def update_review_status(
+            self,
+            theme_id: UUID,
+            review_status: str,
+            review_notes: str | None = None,
+    ) -> None:
+        """Update theme review status and notes."""
+        update_values = {"review_status": review_status}
+        if review_notes is not None:
+            update_values["review_notes"] = review_notes
+
+        query = (
+            update(Theme)
+            .where(Theme.id == theme_id)
+            .values(**update_values)
+        )
+        await self._execute_query(query)
+

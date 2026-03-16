@@ -11,6 +11,7 @@ import collection.temporal.workers  # noqa: F401
 import themes.temporal.workers  # noqa: F401
 import trend.temporal.workers  # noqa: F401
 import moodboard.temporal.workers  # noqa: F401
+import styles.temporal.workers  # noqa: F401
 
 if loaded_config.env == "local":
     os.environ.setdefault('PKG_CONFIG_PATH', '/opt/homebrew/lib/pkgconfig:/opt/homebrew/opt/libffi/lib/pkgconfig')

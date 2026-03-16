@@ -15,6 +15,14 @@ from sqlalchemy import Column, String, Text, Boolean, Index, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from utils.sqlalchemy import Base, EpochTimestampMixin
+from enum import Enum as PyEnum
+
+
+class ReviewStatus(str, PyEnum):
+    """Review status for themes."""
+    approved = "approved"
+    rejected = "rejected"
+
 
 
 class Theme(Base, EpochTimestampMixin):
@@ -162,6 +170,12 @@ class Theme(Base, EpochTimestampMixin):
     # Status
     # =========================================================================
     status = Column(String(50), nullable=False, default="pending")
+
+    # =========================================================================
+    # Review Status
+    # =========================================================================
+    review_status = Column(String(20), nullable=True, default=None)  # null = not reviewed
+    review_notes = Column(Text, nullable=True)
 
     # =========================================================================
     # Indexes

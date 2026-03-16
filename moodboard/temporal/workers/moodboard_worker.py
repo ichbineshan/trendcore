@@ -7,9 +7,9 @@ import sys
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from collection_dna.moodboard.temporal.constants import TemporalQueue
-from collection_dna.moodboard.temporal.workflow import MoodboardGenerationWorkflow
-from collection_dna.moodboard.temporal.activities import (
+from moodboard.temporal.constants import TemporalQueue
+from moodboard.temporal.workflow import MoodboardGenerationWorkflow
+from moodboard.temporal.activities import (
     create_moodboard_record_activity,
     generate_collage_prompt_activity,
     split_into_elements_activity,

@@ -15,8 +15,8 @@ from temporalio import activity
 
 from config.logging import logger
 from config.settings import loaded_config
-from collection_dna.moodboard.service import MoodboardService
-from collection_dna.moodboard.schemas import MoodboardCollageOutput, MoodboardElementsOutput
+from moodboard.service import MoodboardService
+from moodboard.schemas import MoodboardCollageOutput, MoodboardElementsOutput
 from utils.token_tracking import track_litellm_usage
 
 

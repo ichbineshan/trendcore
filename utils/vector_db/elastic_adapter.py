@@ -6,7 +6,7 @@ from typing import Optional
 from elasticsearch import AsyncElasticsearch
 
 from config.settings import loaded_config
-from mcp_tools.types import Filters
+from styles.types import Filters
 from .base import VectorDBAdapter
 from .embeddings import EmbeddingGenerator
 

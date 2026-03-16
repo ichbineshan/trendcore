@@ -1,7 +1,6 @@
 import uuid6
 from sqlalchemy import Column, String, Float, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
 from utils.sqlalchemy import Base, EpochTimestampMixin
 
 
@@ -65,9 +64,6 @@ class Brand(Base, EpochTimestampMixin):
         Index('ix_brand_name', 'brand_name'),
         Index('ix_brand_status', 'status'),
     )
-
-    # Relationship to collections
-    collections = relationship("Collection", back_populates="brand", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Brand(id={self.id}, brand_name={self.brand_name}, status={self.status})>"

@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from collection_dna.moodboard.models import ThemeMoodboard
+from moodboard.models import ThemeMoodboard
 from utils.dao import BaseDAO
 
 

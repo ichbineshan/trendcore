@@ -12,11 +12,12 @@ from collection.schemas import (
     RangeOverview,
     RangeOverviewStats,
     RangeOverviewItem,
+    CollectionSummary,
+    BrandCollectionsResponse,
 )
 from collection.service import CollectionService
 from collection.temporal.temporal_client import CollectionTemporalClient
 from brand.service import BrandService
-from themes.service import ThemeService
 from themes.temporal.temporal_client import ThemeTemporalClient
 
 logger = logging.getLogger(__name__)
@@ -29,12 +30,12 @@ async def create_collection(
     Create a new collection.
 
     1. Extract brand_id from payload
-    2. Store entire payload in user_req
-    3. Create theme placeholder records
-    4. Fetch brand DNA for theme generation
-    5. Trigger Collection workflow (fire & forget)
-    6. Trigger Theme generation workflow (fire & forget)
-    7. Return collection_id with pending status
+    2. Store entire payload in user_req (includes theme_count)
+    3. Fetch brand DNA for theme generation
+    4. Trigger Collection workflow (fire & forget)
+    5. Trigger Theme generation workflow (fire & forget)
+       - Theme rows are created dynamically during workflow based on theme_count
+    6. Return collection_id with pending status
     """
     try:
         user_req = request.model_dump()
@@ -46,21 +47,7 @@ async def create_collection(
             user_req=user_req,
         )
 
-        # 2. Create theme placeholder records
-        theme_requirements = user_req.get("themes", [])
-        season = user_req.get("season", "").replace("-", " ").title()
-        target_year = user_req.get("target_year", "")
-        season_title = f"{season} {target_year}".strip()
-
-        theme_ids = []
-        if theme_requirements:
-            theme_ids = await ThemeService.create_themes_from_requirements(
-                collection_id=collection_id,
-                theme_requirements=theme_requirements,
-                season_title=season_title,
-            )
-
-        # 3. Fetch brand DNA for theme generation
+        # 2. Fetch brand DNA for theme generation
         brand_dna = {}
         brand = await BrandService.get_brand_by_id(brand_id)
         if brand:
@@ -83,31 +70,30 @@ async def create_collection(
                 extra={"brand_id": str(brand_id), "collection_id": str(collection_id)}
             )
 
-        # 4. Fire Collection Generation Workflow (fire & forget)
+        # 3. Fire Collection Generation Workflow (fire & forget)
         collection_client = CollectionTemporalClient()
         collection_workflow_id = await collection_client.start_collection_generation_workflow(
             collection_id=str(collection_id),
             user_req=user_req,
         )
 
-        # 5. Fire Theme Generation Workflow (fire & forget)
-        theme_workflow_id = None
-        if theme_ids:
-            theme_client = ThemeTemporalClient()
-            theme_workflow_id = await theme_client.start_theme_generation_workflow(
-                collection_id=str(collection_id),
-                user_req=user_req,
-                brand_dna=brand_dna,
-                theme_ids=[str(tid) for tid in theme_ids],
-            )
+        # 4. Fire Theme Generation Workflow (fire & forget)
+        # Always trigger - theme rows are created dynamically based on theme_count in user_req
+        theme_client = ThemeTemporalClient()
+        theme_workflow_id = await theme_client.start_theme_generation_workflow(
+            collection_id=str(collection_id),
+            user_req=user_req,
+            brand_dna=brand_dna,
+        )
 
+        theme_count = user_req.get("theme_count", 3)
         logger.info(
             f"Collection creation started",
             extra={
                 "collection_id": str(collection_id),
                 "collection_workflow_id": collection_workflow_id,
                 "theme_workflow_id": theme_workflow_id,
-                "theme_count": len(theme_ids),
+                "theme_count": theme_count,
             }
         )
 
@@ -200,6 +186,7 @@ async def get_collection_overview(
         data = CollectionOverviewData(
             collection_id=str(collection.id),
             status=collection.status,
+            image_url=collection.image_url,
             narrative=narrative,
             range_overview=range_overview,
             target_market=target_market,
@@ -216,5 +203,36 @@ async def get_collection_overview(
         return CollectionOverviewResponse(
             success=False,
             message="Failed to get collection overview",
+            error=str(e),
+        ).model_dump()
+
+
+async def get_collections_by_brand(brand_id: str) -> dict[str, Any]:
+    """Get all collections for a brand."""
+    try:
+        collections = await CollectionService.get_collections_by_brand_id(UUID(brand_id))
+
+        data = [
+            CollectionSummary(
+                collection_id=str(c.id),
+                collection_name=c.collection_name,
+                status=c.status,
+                created_at=c.created_at,
+                image_url=c.image_url
+            )
+            for c in collections
+        ]
+
+        return BrandCollectionsResponse(
+            success=True,
+            message=f"Found {len(data)} collections",
+            data=data,
+        ).model_dump()
+
+    except Exception as e:
+        logger.exception(f"Failed to get collections for brand: {e}")
+        return BrandCollectionsResponse(
+            success=False,
+            message="Failed to get collections",
             error=str(e),
         ).model_dump()

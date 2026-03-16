@@ -15,7 +15,7 @@ from google.genai.types import GenerateContentConfig, ImageConfig
 
 from config.settings import loaded_config
 from file_upload.gcs_file_upload_connector import GCSFileConnector
-from mcp_tools.types import AspectRatio, ImageSize
+from styles.types import AspectRatio, ImageSize
 
 logger = logging.getLogger(__name__)
 

@@ -44,7 +44,7 @@ def get_app():
 
     base_app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Only allow this origins
+        allow_origins=["https://local.create.sit.fyndx1.de:3000"],  # Only allow this origins
         # allow_origins=[],  # Only allow this origins
         allow_methods=["*"],  # Allows all methods
         allow_headers=["*"],  # Allows all headers
@@ -66,14 +66,25 @@ def get_app():
         from brand.routes import router as brand_router
         from collection.routes import router as collection_router
         from themes.routes import router as themes_router
+        from styles.routes import router as styles_router
 
         api_router_v1 = APIRouter(prefix="/v1.0")
         api_router_v1.include_router(brand_router)
         api_router_v1.include_router(collection_router)
         api_router_v1.include_router(themes_router)
+        api_router_v1.include_router(styles_router)
 
 
         base_app.include_router(api_router_v1)
+
+    if loaded_config.server_type == "webhook":
+        from styles.routes import webhook_router as styles_webhook_router
+
+        api_router_v1 = APIRouter(prefix="/v1.0")
+        api_router_v1.include_router(styles_webhook_router)
+
+        base_app.include_router(api_router_v1)
+        return base_app
 
 
 

@@ -6,8 +6,7 @@ Sequential workflow:
 2. Generate collage prompt with web search
 3. Split collage into element prompts
 4. Mark as completed
-
-Image generation is handled by a separate workflow.
+5. Fire-and-forget: Start image generation workflow
 """
 
 from datetime import timedelta
@@ -15,17 +14,20 @@ from typing import Any
 
 from temporalio import workflow
 from temporalio.common import RetryPolicy
+from temporalio.workflow import ParentClosePolicy
 
-from collection_dna.moodboard.temporal.constants import TemporalQueue
+from moodboard.temporal.constants import TemporalQueue
 
 with workflow.unsafe.imports_passed_through():
-    from collection_dna.moodboard.temporal.activities import (
+    from moodboard.temporal.activities import (
         create_moodboard_record_activity,
         generate_collage_prompt_activity,
         split_into_elements_activity,
         mark_moodboard_completed_activity,
         mark_moodboard_failed_activity,
     )
+    from image_generation.temporal.workflow import MoodboardImageWorkflow
+    from image_generation.temporal.constants import TemporalQueue as ImageQueue
 
 
 @workflow.defn
@@ -157,6 +159,26 @@ class MoodboardGenerationWorkflow:
 
             workflow.logger.info(
                 f"Moodboard generation completed for theme_id={theme_id}"
+            )
+
+            # =================================================================
+            # Step 5: Fire-and-Forget Image Generation Workflow
+            # =================================================================
+            workflow.logger.info(
+                f"Step 5: Starting fire-and-forget image generation for moodboard_id={moodboard_id}"
+            )
+
+            await workflow.start_child_workflow(
+                MoodboardImageWorkflow.run,
+                {"moodboard_id": moodboard_id},
+                id=f"moodboard-image-{moodboard_id}",
+                task_queue=ImageQueue.MOODBOARD_IMAGE_GENERATION.value,
+                parent_close_policy=ParentClosePolicy.ABANDON,
+                execution_timeout=timedelta(hours=4),
+            )
+
+            workflow.logger.info(
+                f"Started fire-and-forget image generation workflow for moodboard_id={moodboard_id}"
             )
 
         except Exception as e:

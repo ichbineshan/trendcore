@@ -19,13 +19,21 @@ from themes.temporal.constants import TemporalQueue
 
 with workflow.unsafe.imports_passed_through():
     from themes.temporal.activities import (
+        # Phase 1 Research Activities (1A, 1B, 1C)
+        gather_macro_trends_activity,
+        gather_wgsn_trends_activity,
+        gather_consumer_trends_activity,
+        # Phase 1D + Phase 2 Activities
         generate_theme_briefs_activity,
         generate_single_theme_activity,
+        # Status Update Activities
         update_themes_completed_activity,
         update_themes_failed_activity,
     )
     from trend.temporal.workflow import ThemeTrendWorkflow
     from trend.temporal.constants import TemporalQueue as TrendQueue
+    from moodboard.temporal.workflow import MoodboardGenerationWorkflow
+    from moodboard.temporal.constants import TemporalQueue as MoodboardQueue
 
 
 @workflow.defn
@@ -42,11 +50,11 @@ class ThemeGenerationWorkflow:
         collection_id = event_data.get("collection_id")
         user_req = event_data.get("user_req", {})
         brand_dna = event_data.get("brand_dna", {})
-        theme_ids = event_data.get("theme_ids", [])
+        theme_count = user_req.get("theme_count", 3)
 
         workflow.logger.info(
-            f"Starting two-phase theme generation for collection_id={collection_id}, "
-            f"theme_count={len(theme_ids)}"
+            f"Starting theme generation for collection_id={collection_id}, "
+            f"theme_count={theme_count}"
         )
 
         retry_policy = RetryPolicy(
@@ -66,17 +74,46 @@ class ThemeGenerationWorkflow:
 
         try:
             # =================================================================
-            # Phase 1: Generate Distinct Theme Briefs (Sequential)
+            # Phase 1: Research + Generate Briefs (4 Sequential Activities)
             # =================================================================
-            workflow.logger.info("Phase 1: Generating theme briefs...")
-
             state = {
                 "collection_id": collection_id,
                 "user_req": user_req,
                 "brand_dna": brand_dna,
-                "theme_ids": theme_ids,
             }
 
+            # Phase 1A: Gather macro/micro cultural trends
+            workflow.logger.info("Phase 1A: Gathering macro/micro trends...")
+            state = await workflow.execute_activity(
+                gather_macro_trends_activity,
+                arg=state,
+                task_queue=TemporalQueue.THEME_GENERATION.value,
+                start_to_close_timeout=timedelta(minutes=10),
+                retry_policy=retry_policy,
+            )
+
+            # Phase 1B: Gather WGSN design trends
+            workflow.logger.info("Phase 1B: Gathering WGSN trends...")
+            state = await workflow.execute_activity(
+                gather_wgsn_trends_activity,
+                arg=state,
+                task_queue=TemporalQueue.THEME_GENERATION.value,
+                start_to_close_timeout=timedelta(minutes=10),
+                retry_policy=retry_policy,
+            )
+
+            # Phase 1C: Gather consumer/Google trends
+            workflow.logger.info("Phase 1C: Gathering consumer trends...")
+            state = await workflow.execute_activity(
+                gather_consumer_trends_activity,
+                arg=state,
+                task_queue=TemporalQueue.THEME_GENERATION.value,
+                start_to_close_timeout=timedelta(minutes=10),
+                retry_policy=retry_policy,
+            )
+
+            # Phase 1D: Generate theme briefs + create DB rows
+            workflow.logger.info("Phase 1D: Generating theme briefs...")
             state = await workflow.execute_activity(
                 generate_theme_briefs_activity,
                 arg=state,
@@ -86,10 +123,12 @@ class ThemeGenerationWorkflow:
             )
 
             briefs = state.get("briefs", [])
+            theme_ids = state.get("theme_ids", [])
             results["phase1_success"] = True
 
             workflow.logger.info(
-                f"Phase 1 completed: {len(briefs)} briefs generated. "
+                f"Phase 1 completed: {len(briefs)} briefs generated, "
+                f"{len(theme_ids)} themes created. "
                 f"Rationale: {state.get('distinctiveness_rationale', 'N/A')[:100]}..."
             )
 
@@ -221,6 +260,57 @@ class ThemeGenerationWorkflow:
                         f"Started fire-and-forget trend workflow for theme: {theme_name}"
                     )
 
+            # =================================================================
+            # Fire-and-Forget: Start moodboard workflows for each successful theme
+            # =================================================================
+            if results["successful_themes"]:
+                workflow.logger.info(
+                    f"Starting fire-and-forget moodboard workflows for "
+                    f"{len(results['successful_themes'])} themes..."
+                )
+
+                for theme_result in results["successful_themes"]:
+                    theme_id = theme_result["theme_id"]
+                    theme_name = theme_result.get("theme_name", "unknown")
+
+                    # Find the corresponding brief for this theme
+                    theme_brief = None
+                    for brief_data in briefs:
+                        if brief_data["theme_id"] == theme_id:
+                            theme_brief = brief_data["brief"]
+                            break
+
+                    # Build theme data for moodboard workflow
+                    theme_data = {
+                        "theme_name": theme_name,
+                        "theme_slug": theme_brief.get("theme_slug", "") if theme_brief else "",
+                        "core_concept": theme_brief.get("core_concept", "") if theme_brief else "",
+                    }
+
+                    moodboard_event_data = {
+                        "theme_id": theme_id,
+                        "theme_data": theme_data,
+                        "brand_dna": brand_dna,
+                        "brand_special_requests": user_req.get("brand_special_requests", ""),
+                        "target_categories": user_req.get("categories", []),
+                        "brand_category_details": user_req.get("brand_category_details", {}),
+                        "competitors_string": user_req.get("competitors_string", ""),
+                    }
+
+                    # Start child workflow with ABANDON policy (fire-and-forget)
+                    # await workflow.start_child_workflow(
+                    #     MoodboardGenerationWorkflow.run,
+                    #     moodboard_event_data,
+                    #     id=f"theme-moodboard-{theme_id}",
+                    #     task_queue=MoodboardQueue.MOODBOARD_GENERATION.value,
+                    #     parent_close_policy=ParentClosePolicy.ABANDON,
+                    #     execution_timeout=timedelta(hours=2),
+                    # )
+
+                    workflow.logger.info(
+                        f"Started fire-and-forget moodboard workflow for theme: {theme_name}"
+                    )
+
             workflow.logger.info(f"Theme generation workflow completed for {collection_id}")
 
         except Exception as e:
@@ -229,9 +319,10 @@ class ThemeGenerationWorkflow:
             )
 
             # Mark all themes as failed
+            # theme_ids may exist in state if Phase 1D completed before failure
             await workflow.execute_activity(
                 update_themes_failed_activity,
-                arg={"collection_id": collection_id, "theme_ids": theme_ids},
+                arg={"collection_id": collection_id, "theme_ids": state.get("theme_ids", [])},
                 task_queue=TemporalQueue.THEME_GENERATION.value,
                 start_to_close_timeout=timedelta(minutes=5),
             )

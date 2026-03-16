@@ -46,7 +46,7 @@ firecrawl_api_key: ""
 
 
 temporal_host: "localhost:7233"
-temporal_namespace: "default"
+temporal_namespace: "trend-agent"
 temporal_max_concurrent_activities: 5
 
 base_cdn_domain: "https://assets.fexz0.de/fex-staging-assets-private"

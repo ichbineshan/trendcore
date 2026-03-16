@@ -19,12 +19,19 @@ def ask_question_tool(
     question_data: Union[FormConfig, Dict[str, Any]],
 ) -> Dict[str, Any]:
     """
-    Use this tool to ask the next question in the collection brief questionnaire.
+    Show a structured form to the user for a topic that benefits from structured input
+    (chip-selects, tag-inputs, many options, nested selections).
+    ASK QUESTIONS VIA FORM.
 
-    You must provide:
-    - question_number: The question number (e.g., 1, 2, 3...)
-    - question_id: The question ID from the questionnaire (e.g., 'collection_snapshot', 'customer_persona')
-    - question_data: Form config as JSON with the structure:
+    DO NOT use this for every question. Most topics can be asked conversationally in
+    plain chat text. Only call this when typing the answer would be tedious or when
+    the topic has predefined options the user should pick from.
+
+    Parameters:
+    - question_number: Sequential step number (e.g. 1, 2, 3…)
+    - question_id: Topic id from the data source (e.g. 'range-architecture')
+    - question_data: FormConfig JSON — id, title, description, submitLabel, fields[]
+        Use this tool to ask the next question in the collection brief questionnaire:
       {
         "id": "form-id",
         "title": "Question title",
@@ -42,7 +49,6 @@ def ask_question_tool(
           }
         ]
       }
-
     The tool will format and return the question for display.
     """
     config = (
@@ -106,13 +112,14 @@ def create_collection_brief_tools(thread_meta: Dict[str, Any] = None) -> list:
         answer_text: str,
     ) -> Dict[str, Any]:
         """
-        Use this tool to save the user's answer to a question.
-        Call this immediately after the user provides an answer.
+        Save the user's answer for a topic. THIS IS MANDATORY for every answer — whether
+        the user replied in chat or submitted a form. If one message covers multiple
+        topics, call this once per topic.
 
-        You must provide:
-        - question_id: The ID of the question (e.g., 'collection_snapshot')
-        - question_number: The question number
-        - answer_text: The exact text the user provided
+        Parameters:
+        - question_id: Topic id (e.g. 'collection-snapshot', 'customer-persona')
+        - question_number: The topic's step number
+        - answer_text: The user's answer content
         """
         return {
             "type": "answer_saved",

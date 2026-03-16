@@ -1,5 +1,6 @@
-Collection Brief Questions
-1) Collection snapshot
+Collection Brief: Data points to collect.
+
+Collection snapshot
 Prompt (what the user sees)
 In 1–2 lines, tell me what collection we’re building. This sets the base context for everything that follows.
 What to include in your answer
@@ -12,7 +13,7 @@ Keep it factual and short, no story yet.
 Example
 Women, SS26, May–June 2026, India + SEA
 
-2) Customer persona
+Customer persona
 Prompt (what the user sees)
 Who exactly are we designing for. Think about the real customer and their lifestyle, because this affects silhouettes, styling, and theme direction.
 What to include in your answer
@@ -24,7 +25,7 @@ Avoid “everyone” or “general audience”. A specific customer leads to bet
 Example
 Urban working women who want comfort-first but polished outfits for office + after-work plans
 
-3) Target age
+Target age
 Prompt (what the user sees)
 What age group is this collection primarily for. This helps us calibrate styling, fit, and trend intensity.
 What to include in your answer
@@ -35,7 +36,7 @@ Pick the main range first. If you truly need two ranges, mention the primary and
 Example
 Primary: 25–34
 
-4) Creative north star
+Creative north star
 Prompt (what the user sees)
 Now define the “feel” and the non-negotiables. These are rules the AI will follow while generating themes, moodboards, designs, and artworks.
 What to include in your answer
@@ -49,7 +50,7 @@ Example
 Emotion: fresh, confident, effortless
 Always true: clean silhouette, comfort mobility, one subtle signature detail
 
-5) Range architecture
+Range architecture
 Prompt (what the user sees)
 What are we actually making. List your categories and rough counts so we generate the right volume. If you already have a range architecture document, you can upload it instead.
 What to include in your answer
@@ -63,7 +64,7 @@ Example
 Co-ords 18, dresses 22, tops 28, pants 14, light layers 10
 Use-cases: workwear, brunch, travel weekend, smart casual evening
 
-6) Fit guardrails
+Fit guardrails
 Prompt (what the user sees)
 Tell me sizing and fit intent by category so the outputs don’t feel wrong or unusable. This prevents issues like too tight fits, wrong proportions, or incorrect ease.
 What to include in your answer
@@ -79,7 +80,7 @@ Tops easy fit, slightly boxy
 Pants high-rise straight or wide
 Layers cropped or hip-length, light and structured
 
-7) Design language and no-go’s
+Design language and no-go’s
 Prompt (what the user sees)
 Define your signature shapes and what we should never generate. This keeps the collection consistent and avoids irrelevant outputs.
 What to include in your answer
@@ -96,7 +97,7 @@ Hero silhouettes: relaxed shirt dress with tie waist, boxy co-ord with wide-leg 
 Avoid details: heavy ruffles, deep plunges, shiny satins
 Must-avoid: no sheer fabrics, no bodycon, no heavy embellishment, no large logos, no synthetic fibers
 
-8) Color, materials, and surface direction
+Color, materials, and surface direction
 Prompt (what the user sees)
 Describe the look and tactile feel. This guides palette selection, fabric recommendations, and surface design like prints, embroidery, and embellishment.
 What to include in your answer
@@ -124,7 +125,7 @@ Scale: micro and medium, one oversized hero max
 Techniques: screen print yes, light embroidery yes, foil no, heavy beadwork no
 Motifs: subtle craft cues ok, avoid religious motifs
 
-9) References and assets
+References and assets
 Prompt (what the user sees)
 Share references that represent what “right” looks like. This helps us match your taste accurately. After that, upload your logo and reference images.
 What to include in your answer
@@ -141,7 +142,7 @@ Uploads
 Compulsory: brand logo, reference images
 Optional: past bestsellers, competitor screenshots, fabric swatches, print artwork, brand guideline
 
-10) Theme generation count
+Theme generation count
 Prompt (what the user sees)
 How many different theme directions do you want to explore. More themes gives variety, fewer themes gives speed and tighter focus.
 What to include in your answer

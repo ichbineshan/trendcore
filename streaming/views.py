@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
@@ -10,7 +12,11 @@ from streaming.exceptions import (
 from streaming.serializers import QuestionSchema
 from streaming.services import StreamingService
 from utils.common import handle_exceptions
-from utils.connection_handler import ConnectionHandler, get_connection_handler_for_app_dependency
+from utils.connection_handler import (
+    ConnectionHandler,
+    get_connection_handler_for_app_dependency,
+)
+from threads.services import ThreadService
 
 
 @handle_exceptions(
@@ -36,3 +42,26 @@ async def stream_chat(
             "X-Accel-Buffering": "no",
         }
     )
+
+
+@handle_exceptions(
+    "Failed to fetch collection brief history",
+    [StreamingError, StreamingServiceError],
+)
+async def get_collection_brief_history(
+    thread_id: str,
+    connection_handler: ConnectionHandler = Depends(
+        get_connection_handler_for_app_dependency
+    ),
+):
+    """
+    Return chat-friendly messages for a collection brief thread so the frontend
+    can rehydrate history after refresh.
+    """
+    thread_service = ThreadService(connection_handler)
+    history = await thread_service.get_collection_brief_history(
+        uuid.UUID(thread_id)
+    )
+
+    return {"thread_id": thread_id, "messages": history}
+

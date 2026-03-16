@@ -116,6 +116,63 @@ class ThreadService:
         messages = await self.message_dao.get_messages_by_thread(thread_id)
         return [ThreadMessageSchema.model_validate(msg) for msg in messages]
 
+    async def get_collection_brief_history(self, thread_id: uuid.UUID) -> list[dict]:
+        """
+        Build chat-friendly history for a collection brief thread.
+
+        Returns a list of message dicts that the frontend can use to rehydrate
+        chat state (text + forms) for the given thread.
+        """
+        history: list[dict] = []
+        # Use raw ORM models here so we can access created_at/updated_at directly
+        messages = await self.message_dao.get_messages_by_thread(thread_id)
+
+        for msg in messages:
+            meta = (msg.meta_data or {}).get("collection_brief") if getattr(msg, "meta_data", None) else None
+
+            # Derive role as 'user' | 'assistant'
+            raw_role = getattr(msg, "role", None)
+            role_value = getattr(raw_role, "value", None) or str(raw_role or "").lower()
+
+            # Base shape
+            record: dict = {
+                "id": str(msg.id),
+                "role": role_value,
+                "timestamp": getattr(msg, "created_at", None),
+                "formSchema": None,
+                "questionMetadata": None,
+                "isReviewAndFinish": False,
+                "submitLabel": None,
+            }
+
+            if meta:
+                # Assistant-side, chat-friendly snapshot
+                record["role"] = meta.get("role", record["role"])
+                record["content"] = meta.get("content", "")
+                record["formSchema"] = meta.get("formSchema")
+                record["questionMetadata"] = meta.get("questionMetadata")
+                record["isReviewAndFinish"] = meta.get("isReviewAndFinish", False)
+                record["submitLabel"] = meta.get("submitLabel")
+            else:
+                # User messages (and any non-collection-brief system messages)
+                content = getattr(msg, "content", None)
+                text: str = ""
+                if isinstance(content, dict):
+                    # e.g. {"text": "..."}
+                    text = str(content.get("text", ""))
+                elif isinstance(content, list) and content:
+                    # e.g. [{"content": "..."}]
+                    first = content[0]
+                    if isinstance(first, dict):
+                        text = str(first.get("content", ""))
+                    else:
+                        text = str(first)
+                record["content"] = text
+
+            history.append(record)
+
+        return history
+
     async def get_active_task_for_thread(self, thread_id: uuid.UUID) -> Optional[Task]:
         """Get active task for a thread."""
         return await self.task_dao.get_active_task_for_thread(thread_id)

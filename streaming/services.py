@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage
 
 from config.logging import logger
 from config.settings import loaded_config
+from streaming.message_buffer import AssistantMessageBuffer
 from streaming.serializers import QuestionSchema, StreamEventType
 from streaming.utils import format_stream_event
 from threads.models import Task
@@ -156,6 +157,8 @@ class StreamingService:
                     )
                     stream_config = {"configurable": {"thread_id": str(thread_id)}}
 
+                    # Buffer full assistant message (chunks + tools), cortex-style
+                    message_buffer = AssistantMessageBuffer()
                     accumulated_content = ""
                     last_tool = ""
                     async for event in agent.astream_events(
@@ -172,9 +175,19 @@ class StreamingService:
 
                         try:
                             parsed = json.loads(response)
+                            # Record structured events in buffer
+                            message_buffer.process_event(parsed)
                         except json.JSONDecodeError:
+                            # Raw text chunk – record as streaming event in buffer
                             accumulated_content += response
-                            yield format_stream_event(StreamEventType.CONTENT_CHUNK, response, thread_id=str(thread_id))
+                            message_buffer.process_event(
+                                {"type": "streaming", "content": response}
+                            )
+                            yield format_stream_event(
+                                StreamEventType.CONTENT_CHUNK,
+                                response,
+                                thread_id=str(thread_id),
+                            )
                             continue
 
                         event_type = parsed.get("type")
@@ -188,7 +201,7 @@ class StreamingService:
                                 thread_id=str(thread_id),
                             )
                         elif event_type == "toolUsed":
-                            detail = parsed.get("detail", {})
+                            detail = parsed.get("detail", {}) or {}
                             await self._apply_tool_meta(thread_id, last_tool, detail, user_message)
                             yield format_stream_event(
                                 StreamEventType.TOOL_RESULT,
@@ -201,16 +214,18 @@ class StreamingService:
                                 accumulated_content += content
                                 yield format_stream_event(StreamEventType.CONTENT_CHUNK, content, thread_id=str(thread_id))
 
-                    # Create assistant message
+                    # Create assistant message. Store structured events in content,
+                    # and a chat-friendly view in meta_data.collection_brief.
+                    message_events = message_buffer.get_json_content()
                     assistant_message = await self.thread_service.create_message(
                         request=type('CreateMessageRequest', (), {
                             'role': 'assistant',
-                            'content': {'text': accumulated_content},
+                            'content': message_events,
                             'parent_message_id': user_message_id,
                             'prompt_details': {},
                             'images': [],
                             'user_query': None,
-                            'metadata': {},
+                            'metadata': {}
                         })(),
                         thread_id=thread_id,
                     )
